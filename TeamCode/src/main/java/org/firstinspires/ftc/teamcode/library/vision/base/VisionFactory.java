@@ -36,7 +36,7 @@ public class VisionFactory {
         return tfod;
     }
 
-    public static <Pipeline extends ResolutionPipeline> OpenCvContainer<Pipeline> createOpenCv(CameraType cameraType, HardwareMap hardwareMap, String webcamName, @NotNull Pipeline pipeline) {
+    public static <Pipeline extends ResolutionPipeline> OpenCvContainer<Pipeline> createOpenCv(HardwareMap hardwareMap, String webcamName, @NotNull Pipeline pipeline) {
         OpenCvCamera camera;
         ImageResolution resolution = ImageResolution.R_960x720;
         OpenCvCameraRotation rotation = OpenCvCameraRotation.UPRIGHT;
