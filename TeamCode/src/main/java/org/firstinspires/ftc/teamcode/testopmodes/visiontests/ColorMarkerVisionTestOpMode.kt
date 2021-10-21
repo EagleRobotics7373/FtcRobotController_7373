@@ -3,10 +3,12 @@ package org.firstinspires.ftc.teamcode.testopmodes.visiontests
 import com.acmerobotics.dashboard.FtcDashboard
 import com.acmerobotics.dashboard.config.ValueProvider
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 import org.firstinspires.ftc.teamcode.library.vision.base.OpenCvContainer
 import org.firstinspires.ftc.teamcode.library.vision.base.VisionFactory
 import org.firstinspires.ftc.teamcode.library.vision.freightfrenzy.ColorMarkerVisionPipeline
 
+@TeleOp(name="OpenCV: ColorMarkerVisionTest", group="Vision")
 class ColorMarkerVisionTestOpMode: LinearOpMode() {
 
     var useStandardized = false
