@@ -59,6 +59,11 @@ class ColorMarkerVisionTestOpMode: LinearOpMode() {
                 telemetry.addData("Width", contourResult.width.toString())
             }
 
+            when {
+                gamepad1.a -> useStandardized = true
+                gamepad1.b -> useStandardized = false
+            }
+
             telemetry.update()
         }
 
