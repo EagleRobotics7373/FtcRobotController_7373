@@ -3,8 +3,11 @@ package org.firstinspires.ftc.teamcode.opmodes;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 
 import org.firstinspires.ftc.teamcode.library.robot.robotcore.ExtThinBot;
+import org.firstinspires.ftc.teamcode.library.robot.systems.drive.legacy.HolonomicImpl;
 
 @Config
 @TeleOp
@@ -12,13 +15,26 @@ public class TeleOpCore extends OpMode {
 
     private ExtThinBot robot;
 
+
     public static double IN = 1;
     public static double OUT = 0;
+
+    public static double p = 0;
+    public static double i = 0;
+    public static double d = 0;
+    public static double f = 0;
+
+    public static double carouselRPS = 10;
+    double carouselTPS = carouselRPS * 145.1;
+
 
     @Override
     public void init(){
         robot = new ExtThinBot(hardwareMap);
+        robot.carouselMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        robot.carouselMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(p, i, d, f));
     }
+
 
     @Override
     public void loop(){
@@ -36,6 +52,12 @@ public class TeleOpCore extends OpMode {
             robot.intakeMotor.setPower(gamepad2.right_trigger);
         }
 
+        if(gamepad2.x) {
+            robot.carouselMotor.setVelocity(carouselTPS);
+        } else if (gamepad2.y) {
+            robot.carouselMotor.setVelocity(0);
+        }
+
         double vertical;
         double horizontal;
         double pivot;        double speed;
@@ -50,11 +72,6 @@ public class TeleOpCore extends OpMode {
         horizontal = gamepad1.left_stick_x * speed;
         pivot = gamepad1.right_stick_x * speed;
 
-
-        robot.frontRightMotor.setPower(pivot - vertical - horizontal);
-        robot.backRightMotor.setPower(pivot - vertical + horizontal);
-        robot.frontLeftMotor.setPower(pivot + vertical + horizontal);
-        robot.backLeftMotor.setPower(pivot + vertical - horizontal);
-
+        robot.holonomic.runWithoutEncoderVectored(horizontal, vertical, pivot, 0);
     }
 }

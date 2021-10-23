@@ -9,6 +9,7 @@
         </LynxModule>
         <LynxModule name="Expansion Hub 1" port="1">
             <Matrix12vMotor name="intakeMotor" port="0" />
+            <Matrix12vMotor name="carouselMotor" port="1" />
             <Servo name="outServo" port="0" />
         </LynxModule>
     </LynxUsbDevice>

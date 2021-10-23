@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.hardware.Servo
 class ExtThinBot(_hardwareMap: HardwareMap): BaseRobot(_hardwareMap) {
 
     @JvmField val intakeMotor : DcMotorEx = hwInit("intakeMotor")
+    @JvmField val carouselMotor : DcMotorEx = hwInit("carouselMotor")
 
     @JvmField val outServo : Servo = hwInit("outServo")
 
