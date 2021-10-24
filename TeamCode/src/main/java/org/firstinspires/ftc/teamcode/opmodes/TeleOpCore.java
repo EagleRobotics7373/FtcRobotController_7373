@@ -16,8 +16,11 @@ public class TeleOpCore extends OpMode {
     private ExtThinBot robot;
 
 
-    public static double IN = 1;
-    public static double OUT = 0;
+    public static double IN = 0.6;
+    public static double OUT = 0.32;
+
+    public static double LIN_POS_IN = 1.0;
+    public static double LIN_POS_OUT = 0.0;
 
     public static double p = 0;
     public static double i = 0;
@@ -31,32 +34,26 @@ public class TeleOpCore extends OpMode {
     @Override
     public void init(){
         robot = new ExtThinBot(hardwareMap);
-        robot.carouselMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        robot.carouselMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(p, i, d, f));
+//        robot.carouselMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//        robot.carouselMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(p, i, d, f));
     }
 
 
     @Override
     public void loop(){
-        if(gamepad2.a){
-            robot.outServo.setPosition(IN);
-        }
+        if(gamepad2.a) robot.outServo.setPosition(IN);
+        else if(gamepad2.b) robot.outServo.setPosition(OUT);
 
-        if(gamepad2.b){
-            robot.outServo.setPosition(OUT);
-        }
+        if(gamepad2.left_trigger > 0.05) robot.intakeMotor.setPower(-gamepad2.left_trigger);
+        else if(gamepad2.right_trigger > 0.05) robot.intakeMotor.setPower(gamepad2.right_trigger);
+        else robot.intakeMotor.setPower(0.0);
 
-        if(gamepad2.left_trigger > 0.05){
-            robot.intakeMotor.setPower(-gamepad2.left_trigger);
-        } else if(gamepad2.right_trigger > 0.05){
-            robot.intakeMotor.setPower(gamepad2.right_trigger);
-        }
+        robot.carouselMotor.setPower(gamepad2.left_stick_y);
 
-        if(gamepad2.x) {
-            robot.carouselMotor.setVelocity(carouselTPS);
-        } else if (gamepad2.y) {
-            robot.carouselMotor.setVelocity(0);
-        }
+        robot.linearActuatorMotor.setPower(gamepad2.right_stick_y * 0.20);
+
+        if (gamepad2.x) robot.linearActuatorServo.setPosition(LIN_POS_OUT);
+        if (gamepad2.y) robot.linearActuatorServo.setPosition(LIN_POS_IN);
 
         double vertical;
         double horizontal;
@@ -69,9 +66,13 @@ public class TeleOpCore extends OpMode {
 
         //Mecanum Drive
         vertical = gamepad1.left_stick_y * speed;
-        horizontal = gamepad1.left_stick_x * speed;
+        horizontal = -gamepad1.left_stick_x * speed;
         pivot = gamepad1.right_stick_x * speed;
 
-        robot.holonomic.runWithoutEncoderVectored(horizontal, vertical, pivot, 0);
+//        robot.holonomic.runWithoutEncoderVectored(horizontal, vertical, pivot, 0);
+        robot.frontRightMotor.setPower(pivot - vertical - horizontal);
+        robot.backRightMotor.setPower(pivot - vertical + horizontal);
+        robot.frontLeftMotor.setPower(pivot + vertical + horizontal);
+        robot.backLeftMotor.setPower(pivot + vertical - horizontal);
     }
 }
