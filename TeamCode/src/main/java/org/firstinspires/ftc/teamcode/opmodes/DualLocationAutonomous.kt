@@ -11,34 +11,36 @@ import org.firstinspires.ftc.teamcode.library.functions.AutonomousObjective.*
 import org.firstinspires.ftc.teamcode.library.functions.ToggleButtonWatcher
 import org.firstinspires.ftc.teamcode.library.robot.robotcore.ExtThinBot
 import org.firstinspires.ftc.teamcode.library.vision.base.OpenCvContainer
+import org.firstinspires.ftc.teamcode.library.vision.base.VisionFactory
 import org.firstinspires.ftc.teamcode.library.vision.freightfrenzy.ColorMarkerVisionPipeline
 
 @com.qualcomm.robotcore.eventloop.opmode.Autonomous(name = "Autonomous", group = "Main")
-class Autonomous : LinearOpMode() {
+class DualLocationAutonomous : BaseAutonomous() {
 
     /*
         VARIABLES: Hardware and Control
      */
     private lateinit var robot           : ExtThinBot
 
-    private          val telem           : MultipleTelemetry = MultipleTelemetry(telemetry, FtcDashboard.getInstance().telemetry)
-    private lateinit var elapsedTime     : ElapsedTime
 
-    private lateinit var cvContainer     : OpenCvContainer<ColorMarkerVisionPipeline>
+//    private lateinit var cvContainer     : OpenCvContainer<ColorMarkerVisionPipeline>
 
 //    private lateinit var player          : ExtDirMusicPlayer
 
     /*
-        VARIABLES: Menu Optionsbuild
+        VARIABLES: Menu Options
      */
-    private val config = OpModeConfig(telemetry)
     private var allianceColor: AllianceColor by config.custom("Alliance Color", RED, BLUE)
-    private var autonomousObjective: AutonomousObjective by config.custom("Alliance Color", WAREHOUSE, CAROUSEL)
+    private var autonomousObjective: AutonomousObjective by config.custom("Starting Location", WAREHOUSE, CAROUSEL)
 
     override fun runOpMode() {
         robot = ExtThinBot(hardwareMap)
-        cvContainer.pipeline.shouldKeepTracking = true
-        cvContainer.pipeline.tracking = true
+//        cvContainer = VisionFactory.createOpenCv(hardwareMap, "Webcam 1", ColorMarkerVisionPipeline())
+//        cvContainer.pipeline.shouldKeepTracking = true
+//        cvContainer.pipeline.tracking = true
+        robot.carouselMotor.mode = DcMotor.RunMode.RUN_USING_ENCODER
+
+        super.operateMenu()
 
         when (autonomousObjective) {
             WAREHOUSE -> {
@@ -68,26 +70,10 @@ class Autonomous : LinearOpMode() {
             }
         }
 
-    }
-
-    fun operateMenu() {
-
-        val dpadUpWatch = ToggleButtonWatcher {gamepad1.dpad_up}
-        val dpadDownWatch = ToggleButtonWatcher {gamepad1.dpad_down}
-        val dpadLeftWatch = ToggleButtonWatcher {gamepad1.dpad_left}
-        val dpadRightWatch = ToggleButtonWatcher {gamepad1.dpad_right}
-
-        config.update()
-
-        while (!isStarted && !isStopRequested) {
-            when {
-                dpadUpWatch.invoke()    -> config.update(prevItem = true)
-                dpadDownWatch.invoke()  -> config.update(nextItem = true)
-                dpadLeftWatch.invoke()  -> config.update(iterBack = true)
-                dpadRightWatch.invoke() -> config.update(iterFw   = true)
-            }
-
-        }
+        robot.holonomic.stop()
+        robot.carouselMotor.velocity = 0.0
 
     }
+
+
 }
