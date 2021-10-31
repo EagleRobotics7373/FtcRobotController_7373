@@ -1,9 +1,6 @@
 package org.firstinspires.ftc.teamcode.opmodes
 
 import com.qualcomm.robotcore.hardware.DcMotor
-import org.firstinspires.ftc.teamcode.library.functions.*
-import org.firstinspires.ftc.teamcode.library.functions.AllianceColor.*
-import org.firstinspires.ftc.teamcode.library.functions.AutonomousObjective.*
 import org.firstinspires.ftc.teamcode.library.robot.robotcore.ExtThinBot
 
 @com.qualcomm.robotcore.eventloop.opmode.Autonomous(name = "Estacionar", group = "Main")
@@ -38,8 +35,10 @@ class ParkingAutonomous : BaseAutonomous() {
         val horizontal = powerX
         val pivot = 0.0
 
-        robot.frontRightMotor.power = pivot - vertical - horizontal
-        robot.backRightMotor.power = pivot - vertical + horizontal
+
+//        robot.holonomic.runWithoutEncoderVectored(horizontal, vertical, pivot, 0);
+        robot.frontRightMotor.power = pivot - vertical + horizontal
+        robot.backRightMotor.power = pivot - vertical - horizontal
         robot.frontLeftMotor.power = pivot + vertical + horizontal
         robot.backLeftMotor.power = pivot + vertical - horizontal
 
