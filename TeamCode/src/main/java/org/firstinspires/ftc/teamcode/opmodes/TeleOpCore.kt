@@ -4,6 +4,7 @@ import com.arcrobotics.ftclib.gamepad.GamepadEx
 import com.arcrobotics.ftclib.gamepad.GamepadKeys
 import com.qualcomm.robotcore.eventloop.opmode.OpMode
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
+import org.firstinspires.ftc.teamcode.library.functions.DashboardVar
 import org.firstinspires.ftc.teamcode.library.robot.robotcore.ExtThinBot
 import kotlin.math.absoluteValue
 
@@ -13,6 +14,16 @@ class TeleOpCoreKt: OpMode() {
     lateinit var robot: ExtThinBot
     val gamepad1Ex = GamepadEx(gamepad1)
     val gamepad2Ex = GamepadEx(gamepad2)
+
+    private var reverse by DashboardVar(false, "reverse", this::class)
+    private var speed by DashboardVar(1, "speed", this::class) {it in 1..3}
+
+    private var carouselRPS by DashboardVar(10, "carouselRPS", this::class)
+    private var carouselTPS by DashboardVar(carouselRPS * 145.1, "carouselTPS", this::class)
+    private var defaultCarouselSpeed by DashboardVar(-0.25, "defaultCarouselSpeed", this::class)
+
+    private var depositServoIn by DashboardVar(0.6, "depositServoIn", this::class)
+    private var depositServoOut by DashboardVar(0.32, "depositServoOut", this::class)
 
     override fun init() {
         robot = ExtThinBot(hardwareMap)
@@ -52,26 +63,31 @@ class TeleOpCoreKt: OpMode() {
             gamepad2Ex.wasJustPressed(GamepadKeys.Button.X) -> defaultCarouselSpeed *= -1.0
         }
 
-        // Control linear actuator motor (not implemented in hardware)
+        // TODO: Control linear actuator motor (not implemented in hardware)
         robot.linearActuatorMotor.power = gamepad2.right_stick_y * 0.20
 
-        // Control linear actuator servo (not implemented in hardware)
+        // TODO: Control team scoring element servo (not implemented in hardware)
         when {
-            gamepad2.x -> robot.linearActuatorServo.position = LIN_POS_OUT
-            gamepad2.y -> robot.linearActuatorServo.position = LIN_POS_IN
+            gamepad2.x -> robot.linearActuatorServo.position = 1.0
+            gamepad2.y -> robot.linearActuatorServo.position = 0.0
         }
 
         // Adjust drivetrain speed
         when {
-            gamepad1Ex.wasJustPressed(GamepadKeys.Button.DPAD_UP) ->
-                if (speed < 3) speed++
-            gamepad1Ex.wasJustPressed(GamepadKeys.Button.DPAD_DOWN) ->
-                if (speed > 1) speed--
+            gamepad1Ex.wasJustPressed(GamepadKeys.Button.DPAD_UP) -> if (speed < 3) speed++
+            gamepad1Ex.wasJustPressed(GamepadKeys.Button.DPAD_DOWN) -> if (speed > 1) speed--
         }
 
-        val vertical = -gamepad1.left_stick_y * speed * if (reverse) 1 else -1
-        val horizontal = gamepad1.left_stick_x * speed * if (reverse) 1 else -1
-        val pivot = gamepad1.right_stick_x * speed
+        // Reverse drivetrain
+        when {
+            gamepad1.a -> reverse = false
+            gamepad1.b -> reverse = true
+            gamepad1Ex.wasJustPressed(GamepadKeys.Button.X) -> reverse = !reverse
+        }
+
+        val vertical = -gamepad1.left_stick_y.toDouble() * speed/3 * if (reverse) 1 else -1
+        val horizontal = gamepad1.left_stick_x.toDouble() * speed/3 * if (reverse) 1 else -1
+        val pivot = gamepad1.right_stick_x.toDouble() * speed/3
 
 
 //        robot.holonomic.runWithoutEncoderVectored(horizontal, vertical, pivot, 0);
