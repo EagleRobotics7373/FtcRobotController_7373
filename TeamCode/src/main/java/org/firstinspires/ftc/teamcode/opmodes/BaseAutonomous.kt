@@ -19,7 +19,6 @@ abstract class BaseAutonomous<T:BaseRobot>: LinearOpMode() {
 
     protected fun autonomousConfig() {
         robot.holonomicRR?.doMotorConfigForAutonomous()
-        robot.let { it as? ExtThinBot }?.odometryLift?.lower()
     }
 
     protected val config = OpModeConfig(telemetry)
