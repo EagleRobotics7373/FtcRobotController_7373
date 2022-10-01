@@ -10,11 +10,11 @@ public class OdometryConstants {
     public static double leftAngleDeg = 180.0;
 
     public static double rightXcm = -1.6;
-    public static double rightYcm = -19.6;
+    public static double rightYcm = -16.5;
     public static double rightAngleDeg = 0.0;
 
-    public static double rearXcm = 0;
-    public static double rearYcm = 0;
+    public static double rearXcm = 3.0;
+    public static double rearYcm = -10.0;
     public static double rearAngleDeg = -90;
 
     public static boolean reverseOutput = false;

@@ -31,9 +31,6 @@ class TeleOpCore: OpMode() {
     private var fod = false
     private var zeroAngle = 0.0
     private var lastTimeRead = 0.0
-
-    private var defaultWebcamPosition = 0.1/*by DashboardVar(1.0, "defaultWebcamPosition", this::class) { it in 0.0..1.0 }*/
-
     private lateinit var elapsedTime: ElapsedTime
 
     private val orientation get() = robot.imuControllerC.imuA.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.RADIANS)
@@ -65,9 +62,6 @@ class TeleOpCore: OpMode() {
         gamepad2Ex.readButtons()
         toggleGamepad1TouchpadPress()
         toggleGamepad2TouchpadPress()
-
-        // Control webcam servo
-        robot.webcamServo.position = defaultWebcamPosition
 
         if (!gamepad1CanControlAccessories) {
             // Adjust drivetrain speed

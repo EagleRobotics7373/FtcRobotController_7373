@@ -8,16 +8,8 @@ enum class AllianceColor {
     }
 }
 
-enum class AutonomousObjective {
-    WAREHOUSE, CAROUSEL
-}
-
-enum class PostAllianceHubTask {
-    WAREHOUSE, CAROUSEL, NOTHING, BACKPEDAL
-}
-
 enum class StartingPosition {
-    NEAR_CAROUSEL, CENTER, NEAR_WAREHOUSE
+    LEFT, RIGHT
 }
 
 enum class CameraPosition {
