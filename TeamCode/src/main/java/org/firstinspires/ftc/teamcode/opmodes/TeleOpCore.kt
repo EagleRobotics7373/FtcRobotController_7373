@@ -9,10 +9,9 @@ import com.qualcomm.robotcore.util.ElapsedTime
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference
-import org.firstinspires.ftc.teamcode.library.functions.AllianceColor
-import org.firstinspires.ftc.teamcode.library.functions.AllianceColor.Companion.persistingAllianceColor
 import org.firstinspires.ftc.teamcode.library.functions.ToggleButtonWatcher
 import org.firstinspires.ftc.teamcode.library.robot.robotcore.ExtThinBot
+import org.firstinspires.ftc.teamcode.library.robot.systems.meet1.LiftClawSystem
 import kotlin.math.absoluteValue
 import kotlin.math.pow
 
@@ -31,6 +30,10 @@ class TeleOpCore: OpMode() {
     private var fod = false
     private var zeroAngle = 0.0
     private var lastTimeRead = 0.0
+
+    private var liftPowerAuto1 = 0.5
+    private var liftPowerAuto2 = 0.5
+
     private lateinit var elapsedTime: ElapsedTime
 
     private val orientation get() = robot.imuControllerC.imuA.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.RADIANS)
@@ -96,6 +99,30 @@ class TeleOpCore: OpMode() {
         robot.holonomic.runWithoutEncoderVectored(horizontal, vertical, pivot,
                 if (fod) zeroAngle - robot.imuControllerC.getHeading() else 0.0)
 
+
+        // Cycle lift positions
+        when {
+            gamepad2.right_bumper -> robot.liftClawSystem.liftCycleUp(liftPowerAuto1, liftPowerAuto2)
+            gamepad2.left_bumper -> robot.liftClawSystem.liftCycleDown(liftPowerAuto1, liftPowerAuto2)
+            gamepad2.x -> robot.liftClawSystem.liftAuto(LiftClawSystem.LiftPosition.FLOOR, liftPowerAuto1, liftPowerAuto2)
+        }
+
+        // Manual lift control
+        val linearActuatorPower = if (gamepad2CanControlExtras) gamepad2.left_stick_y.toDouble()*0.5 else 0.0
+        val liftPower = if (gamepad2CanControlExtras) gamepad2.right_stick_y.toDouble()*0.5 else 0.0
+        if (robot.linearActuatorMotor.mode == DcMotor.RunMode.RUN_TO_POSITION) {
+            if (gamepad2.left_stick_y.absoluteValue > 0 ) robot.liftClawSystem.liftManual(0.0, 0.0)
+        } else if (gamepad2.y && !gamepad2CanControlExtras) {
+            robot.liftClawSystem.liftManual(-0.10, 0.0)
+        } else {
+            robot.liftClawSystem.liftManual(linearActuatorPower, liftPower)
+        }
+
+        when {
+            gamepad2.a -> robot.liftClawSystem.clawOpen()
+            gamepad2.b -> robot.liftClawSystem.clawClose()
+        }
+
         val currentTime = elapsedTime.milliseconds()
         telemetry.addData("Time Δ (ms)", currentTime - lastTimeRead)
         telemetry.addLine()
@@ -105,6 +132,10 @@ class TeleOpCore: OpMode() {
         telemetry.addData("Drivetrain max rpm", maxRpm * (speed/speedMax))
         telemetry.addData("Cubic enable", cubicEnable)
         telemetry.addLine()
+        telemetry.addData("Linear actuator power", linearActuatorPower)
+        telemetry.addData("Lift power", liftPower)
+        telemetry.addData("Linear actuator motor position", robot.linearActuatorMotor.currentPosition)
+        telemetry.addData("Lift motor position", robot.liftMotor.currentPosition)
         telemetry.addLine()
         telemetry.addData("Vertical", vertical)
         telemetry.addData("Horizontal", horizontal)

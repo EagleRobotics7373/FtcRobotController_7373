@@ -4,39 +4,68 @@ import com.qualcomm.robotcore.hardware.DcMotor
 import com.qualcomm.robotcore.hardware.Servo
 
 class LiftClawSystem(
-        private val liftMotor1: DcMotor,
-        private val liftMotor2: DcMotor,
+        private val linearActuatorMotor: DcMotor,
+        private val liftMotor: DcMotor,
         private val clawServo: Servo
 ) {
+    private var liftPosition: LiftPosition = LiftPosition.GROUND
 
-    fun LiftManual(motor1Power: Double, motor2Power: Double) {
-        liftMotor1.mode = DcMotor.RunMode.RUN_WITHOUT_ENCODER
-        liftMotor2.mode = DcMotor.RunMode.RUN_WITHOUT_ENCODER
+    private var openPosition: Double = 0.0
+    private var closedPosition: Double = 1.0
 
-        liftMotor1.power = motor1Power
-        liftMotor2.power = motor2Power
+    fun liftManual(motor1Power: Double, motor2Power: Double) {
+        linearActuatorMotor.mode = DcMotor.RunMode.RUN_WITHOUT_ENCODER
+        liftMotor.mode = DcMotor.RunMode.RUN_WITHOUT_ENCODER
+
+        linearActuatorMotor.power = motor1Power
+        liftMotor.power = motor2Power
     }
 
-    fun LiftAuto(height: LiftPosition, power1: Double, power2: Double) {
-        liftMotor1.targetPosition = height.ticks1
-        liftMotor2.targetPosition = height.ticks2
+    fun liftAuto(height: LiftPosition, power1: Double, power2: Double) {
+        liftPosition = height
+        linearActuatorMotor.targetPosition = height.ticks1
+        liftMotor.targetPosition = height.ticks2
 
-        liftMotor1.mode = DcMotor.RunMode.RUN_TO_POSITION
-        liftMotor2.mode = DcMotor.RunMode.RUN_TO_POSITION
+        linearActuatorMotor.mode = DcMotor.RunMode.RUN_TO_POSITION
+        liftMotor.mode = DcMotor.RunMode.RUN_TO_POSITION
 
-        liftMotor1.power = power1
-        liftMotor2.power = power2
+        linearActuatorMotor.power = power1
+        liftMotor.power = power2
+    }
+
+    fun liftCycleUp(power1: Double, power2: Double) {
+        when (liftPosition) {
+            LiftPosition.FLOOR -> liftAuto(LiftPosition.GROUND, power1, power2)
+            LiftPosition.GROUND -> liftAuto(LiftPosition.LOW, power1, power2)
+            LiftPosition.LOW -> liftAuto(LiftPosition.MIDDLE, power1, power2)
+            LiftPosition.MIDDLE -> liftAuto(LiftPosition.HIGH, power1, power2)
+            LiftPosition.HIGH -> liftAuto(LiftPosition.HIGH, power1, power2)
+        }
+    }
+
+    fun liftCycleDown(power1: Double, power2: Double) {
+        when (liftPosition) {
+            LiftPosition.FLOOR -> liftAuto(LiftPosition.FLOOR, power1, power2)
+            LiftPosition.GROUND -> liftAuto(LiftPosition.FLOOR, power1, power2)
+            LiftPosition.LOW -> liftAuto(LiftPosition.GROUND, power1, power2)
+            LiftPosition.MIDDLE -> liftAuto(LiftPosition.LOW, power1, power2)
+            LiftPosition.HIGH -> liftAuto(LiftPosition.MIDDLE, power1, power2)
+        }
+    }
+
+    fun clawOpen() {
+        clawServo.position = openPosition
+    }
+
+    fun clawClose() {
+        clawServo.position = closedPosition
     }
 
     enum class LiftPosition(val ticks1: Int, val ticks2: Int) {
-        GROUND(0, 0),
-        LOW(1, 0),
-        MIDDLE(2, 0),
-        HIGH(3, 0);
-    }
-
-    enum class ClawPosition(val ticks: Int) {
-        OPEN(0),
-        CLOSED(1);
+        FLOOR(0, 0),
+        GROUND(1, 0),
+        LOW(2, 0),
+        MIDDLE(3, 0),
+        HIGH(4, 0);
     }
 }
