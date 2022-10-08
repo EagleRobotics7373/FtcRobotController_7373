@@ -8,6 +8,10 @@
         <LynxModule name="Expansion Hub 2" port="2">
             <Matrix12vMotor name="backRightMotor" port="0" />
             <Matrix12vMotor name="frontRightMotor" port="1" />
+
+            <Matrix12vMotor name="linearActuatorMotor" port="2" />
+
+            <Servo name="clawServo" port="0"/>
         </LynxModule>
     </LynxUsbDevice>
 </Robot>

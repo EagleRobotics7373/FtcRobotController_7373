@@ -108,7 +108,8 @@ class TeleOpCore: OpMode() {
         }
 
         // Manual lift control
-        val linearActuatorPower = if (gamepad2CanControlExtras) gamepad2.left_stick_y.toDouble()*0.5 else 0.0
+        val linearActuatorPower = if (gamepad2CanControlExtras &&
+                !(robot.linearActuatorMotor.currentPosition <= LiftClawSystem.LiftPosition.FLOOR.ticks1 && gamepad2.left_stick_y <= 0)) gamepad2.left_stick_y.toDouble()*0.5 else 0.0
         val liftPower = if (gamepad2CanControlExtras) gamepad2.right_stick_y.toDouble()*0.5 else 0.0
         if (robot.linearActuatorMotor.mode == DcMotor.RunMode.RUN_TO_POSITION) {
             if (gamepad2.left_stick_y.absoluteValue > 0 ) robot.liftClawSystem.liftManual(0.0, 0.0)

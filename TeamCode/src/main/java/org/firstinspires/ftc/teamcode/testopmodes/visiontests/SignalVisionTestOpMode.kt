@@ -6,14 +6,13 @@ import com.arcrobotics.ftclib.gamepad.GamepadEx
 import com.arcrobotics.ftclib.gamepad.GamepadKeys
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
-import org.firstinspires.ftc.teamcode.library.functions.DashboardVar
 import org.firstinspires.ftc.teamcode.library.functions.rangeClip
 import org.firstinspires.ftc.teamcode.library.vision.base.VisionFactory
-import org.firstinspires.ftc.teamcode.library.vision.freightfrenzy.ColorMarkerVisionConstants
-import org.firstinspires.ftc.teamcode.library.vision.freightfrenzy.ColorMarkerVisionPipeline
+import org.firstinspires.ftc.teamcode.library.vision.powerplay.SignalVisionConstants
+import org.firstinspires.ftc.teamcode.library.vision.powerplay.SignalVisionPipeline
 
 @TeleOp(name="OpenCV: ColorMarkerVisionTest", group="Vision")
-class ColorMarkerVisionTestOpMode: LinearOpMode() {
+class SignalVisionTestOpMode: LinearOpMode() {
 
     var useStandardized = false
 
@@ -41,7 +40,7 @@ class ColorMarkerVisionTestOpMode: LinearOpMode() {
         val cvContainer = VisionFactory.createOpenCv(
             hardwareMap,
             "Webcam 1",
-            ColorMarkerVisionPipeline())
+            SignalVisionPipeline())
         cvContainer.start()
 
         waitForStart()
@@ -52,7 +51,7 @@ class ColorMarkerVisionTestOpMode: LinearOpMode() {
         while (opModeIsActive()) {
             gamepad1Ex.readButtons()
 
-            val contourResult = cvContainer.pipeline.contourResult?.let {
+            val contourResult = cvContainer.pipeline.contourResults[0]?.let {
                 if (useStandardized) it.standardized else it
             }
 
@@ -74,8 +73,8 @@ class ColorMarkerVisionTestOpMode: LinearOpMode() {
 
                 if (useStandardized) {
                     telemetry.addData("Field position (by center x)", when (centerX) {
-                        in 0.0..ColorMarkerVisionConstants.BOUNDARY_FIRST -> "LEFT"
-                        in ColorMarkerVisionConstants.BOUNDARY_FIRST..ColorMarkerVisionConstants.BOUNDARY_SECOND -> "CENTER"
+                        in 0.0..SignalVisionConstants.BOUNDARY_FIRST -> "LEFT"
+                        in SignalVisionConstants.BOUNDARY_FIRST..SignalVisionConstants.BOUNDARY_SECOND -> "CENTER"
                         else -> "RIGHT"
                     })
                 }

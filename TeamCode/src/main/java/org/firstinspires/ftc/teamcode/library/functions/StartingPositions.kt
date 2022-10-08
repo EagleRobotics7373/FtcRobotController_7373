@@ -12,6 +12,8 @@ enum class StartingPosition {
     LEFT, RIGHT
 }
 
-enum class CameraPosition {
-    LEFT, CENTER, RIGHT
+enum class SignalState(var shift: Double) {
+    LEFT(-24.0),
+    CENTER(0.0),
+    RIGHT(24.0)
 }

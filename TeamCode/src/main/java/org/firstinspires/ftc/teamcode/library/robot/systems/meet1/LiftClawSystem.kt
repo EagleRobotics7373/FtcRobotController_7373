@@ -8,7 +8,7 @@ class LiftClawSystem(
         private val liftMotor: DcMotor,
         private val clawServo: Servo
 ) {
-    private var liftPosition: LiftPosition = LiftPosition.GROUND
+    var liftPosition: LiftPosition = LiftPosition.GROUND
 
     private var openPosition: Double = 0.0
     private var closedPosition: Double = 1.0

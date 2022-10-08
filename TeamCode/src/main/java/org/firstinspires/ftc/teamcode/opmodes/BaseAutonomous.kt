@@ -79,4 +79,15 @@ abstract class BaseAutonomous<T:BaseRobot>: LinearOpMode() {
     protected fun BaseTrajectoryBuilder<TrajectoryBuilder>.buildAndRun(safeMode: Boolean = false, vararg waypointActions: Pair<Double, ()->Unit>) {
         robot.holonomicRR!!.followTrajectorySync(this.build(), waypointActions.toList(), safeMode)
     }
+
+    protected fun safeModeCheck(safeModeActive: Boolean) {
+        if (safeModeActive) {
+            if (robot.holonomicRR!!.safeModeLastTriggered != null) {
+                telem.addLine("EMERGENCY STOP!!!")
+                telem.addLine("Failed to register robot movement")
+                telem.update()
+                return
+            }
+        }
+    }
 }

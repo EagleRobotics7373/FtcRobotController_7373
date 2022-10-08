@@ -11,7 +11,7 @@ class ExtThinBot(_hardwareMap: HardwareMap): BaseRobot(_hardwareMap) {
 
     @JvmField val linearActuatorMotor : DcMotorEx = hwInit("linearActuatorMotor")
     @JvmField val liftMotor : DcMotorEx = hwInit("liftMotor")
-    @JvmField val clawServo  : Servo = hwInit("clawServo")
+    @JvmField val clawServo : Servo = hwInit("clawServo")
 
     @JvmField val liftClawSystem = LiftClawSystem(linearActuatorMotor, liftMotor, clawServo)
 
