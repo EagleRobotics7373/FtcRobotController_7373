@@ -11,7 +11,7 @@ import org.firstinspires.ftc.teamcode.library.robot.robotcore.ExtThinBot
 import org.firstinspires.ftc.teamcode.library.vision.base.VisionFactory
 import org.firstinspires.ftc.teamcode.library.vision.powerplay.SignalVisionPipeline
 
-@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name = "Vision Autonomous", group = "Main")
+@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name = "Vision Autonomous (Broken)", group = "Main")
 class VisionAutonomous : BaseAutonomous<ExtThinBot>() {
 
     private var allianceColor: AllianceColor by config.custom("Alliance Color", RED, BLUE)
@@ -33,6 +33,8 @@ class VisionAutonomous : BaseAutonomous<ExtThinBot>() {
                 SignalVisionPipeline())
         cvContainer.start()
 
+        super.operateMenu(null)
+
         if (opModeIsActive()) {
             cvContainer.pipeline.tracking = true
             cvContainer.pipeline.shouldKeepTracking = true
@@ -48,12 +50,16 @@ class VisionAutonomous : BaseAutonomous<ExtThinBot>() {
 
             sleep(webcamScanningDuration.toLong())
 
-            val contourResults = cvContainer.pipeline.contourResults
+            val contourResults = arrayOf(
+                    cvContainer.pipeline.contourResult1,
+                    cvContainer.pipeline.contourResult2,
+                    cvContainer.pipeline.contourResult3
+            )
 
             signalState = if (contourResults[1] != null) SignalState.CENTER
             else if (contourResults[0] != null) SignalState.LEFT
             else if (contourResults[2] != null) SignalState.RIGHT
-            else SignalState.CENTER
+            else signalState
 
             telem.addData("Parking Position for $allianceColor Alliance", signalState)
             telem.update()

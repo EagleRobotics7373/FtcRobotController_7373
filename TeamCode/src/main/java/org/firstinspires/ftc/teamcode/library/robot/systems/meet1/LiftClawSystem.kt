@@ -10,8 +10,8 @@ class LiftClawSystem(
 ) {
     var liftPosition: LiftPosition = LiftPosition.GROUND
 
-    private var openPosition: Double = 0.0
-    private var closedPosition: Double = 1.0
+    private var openPosition: Double = 0.93
+    private var closedPosition: Double = 0.45
 
     fun liftManual(motor1Power: Double, motor2Power: Double) {
         linearActuatorMotor.mode = DcMotor.RunMode.RUN_WITHOUT_ENCODER
@@ -21,10 +21,9 @@ class LiftClawSystem(
         liftMotor.power = motor2Power
     }
 
-    fun liftAuto(height: LiftPosition, power1: Double, power2: Double) {
-        liftPosition = height
-        linearActuatorMotor.targetPosition = height.ticks1
-        liftMotor.targetPosition = height.ticks2
+    fun liftAuto(ticks1: Int, ticks2: Int, power1: Double, power2: Double) {
+        linearActuatorMotor.targetPosition = ticks1
+        liftMotor.targetPosition = ticks2
 
         linearActuatorMotor.mode = DcMotor.RunMode.RUN_TO_POSITION
         liftMotor.mode = DcMotor.RunMode.RUN_TO_POSITION
@@ -35,21 +34,21 @@ class LiftClawSystem(
 
     fun liftCycleUp(power1: Double, power2: Double) {
         when (liftPosition) {
-            LiftPosition.FLOOR -> liftAuto(LiftPosition.GROUND, power1, power2)
-            LiftPosition.GROUND -> liftAuto(LiftPosition.LOW, power1, power2)
-            LiftPosition.LOW -> liftAuto(LiftPosition.MIDDLE, power1, power2)
-            LiftPosition.MIDDLE -> liftAuto(LiftPosition.HIGH, power1, power2)
-            LiftPosition.HIGH -> liftAuto(LiftPosition.HIGH, power1, power2)
+            LiftPosition.FLOOR -> liftAuto(LiftPosition.GROUND.ticks1, LiftPosition.GROUND.ticks2, power1, power2)
+            LiftPosition.GROUND -> liftAuto(LiftPosition.LOW.ticks1, LiftPosition.LOW.ticks2, power1, power2)
+            LiftPosition.LOW -> liftAuto(LiftPosition.MIDDLE.ticks1, LiftPosition.MIDDLE.ticks2, power1, power2)
+            LiftPosition.MIDDLE -> liftAuto(LiftPosition.HIGH.ticks1, LiftPosition.HIGH.ticks2, power1, power2)
+            LiftPosition.HIGH -> liftAuto(LiftPosition.HIGH.ticks1, LiftPosition.HIGH.ticks2, power1, power2)
         }
     }
 
     fun liftCycleDown(power1: Double, power2: Double) {
         when (liftPosition) {
-            LiftPosition.FLOOR -> liftAuto(LiftPosition.FLOOR, power1, power2)
-            LiftPosition.GROUND -> liftAuto(LiftPosition.FLOOR, power1, power2)
-            LiftPosition.LOW -> liftAuto(LiftPosition.GROUND, power1, power2)
-            LiftPosition.MIDDLE -> liftAuto(LiftPosition.LOW, power1, power2)
-            LiftPosition.HIGH -> liftAuto(LiftPosition.MIDDLE, power1, power2)
+            LiftPosition.FLOOR -> liftAuto(LiftPosition.FLOOR.ticks1, LiftPosition.FLOOR.ticks2, power1, power2)
+            LiftPosition.GROUND -> liftAuto(LiftPosition.FLOOR.ticks1, LiftPosition.FLOOR.ticks2, power1, power2)
+            LiftPosition.LOW -> liftAuto(LiftPosition.GROUND.ticks1, LiftPosition.GROUND.ticks2, power1, power2)
+            LiftPosition.MIDDLE -> liftAuto(LiftPosition.LOW.ticks1, LiftPosition.LOW.ticks2, power1, power2)
+            LiftPosition.HIGH -> liftAuto(LiftPosition.HIGH.ticks1, LiftPosition.HIGH.ticks2, power1, power2)
         }
     }
 
@@ -63,9 +62,9 @@ class LiftClawSystem(
 
     enum class LiftPosition(val ticks1: Int, val ticks2: Int) {
         FLOOR(0, 0),
-        GROUND(1, 0),
-        LOW(2, 0),
-        MIDDLE(3, 0),
-        HIGH(4, 0);
+        GROUND(-100, 0),
+        LOW(-690, 0),
+        MIDDLE(-1000, 0),
+        HIGH(-1000, 0);
     }
 }

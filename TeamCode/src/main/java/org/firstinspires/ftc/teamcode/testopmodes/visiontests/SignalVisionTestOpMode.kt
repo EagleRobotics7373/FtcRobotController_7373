@@ -11,7 +11,7 @@ import org.firstinspires.ftc.teamcode.library.vision.base.VisionFactory
 import org.firstinspires.ftc.teamcode.library.vision.powerplay.SignalVisionConstants
 import org.firstinspires.ftc.teamcode.library.vision.powerplay.SignalVisionPipeline
 
-@TeleOp(name="OpenCV: ColorMarkerVisionTest", group="Vision")
+@TeleOp(name="OpenCV: SignalVisionTest", group="Vision")
 class SignalVisionTestOpMode: LinearOpMode() {
 
     var useStandardized = false
@@ -32,9 +32,6 @@ class SignalVisionTestOpMode: LinearOpMode() {
             },
         true)
 
-        val webcamServo = hardwareMap.servo.get("webcamServo")
-        var webcamServoPosition = 0.76
-
         val gamepad1Ex = GamepadEx(gamepad1)
 
         val cvContainer = VisionFactory.createOpenCv(
@@ -43,6 +40,8 @@ class SignalVisionTestOpMode: LinearOpMode() {
             SignalVisionPipeline())
         cvContainer.start()
 
+        var index = 0
+
         waitForStart()
 
         cvContainer.pipeline.tracking = true
@@ -50,10 +49,31 @@ class SignalVisionTestOpMode: LinearOpMode() {
 
         while (opModeIsActive()) {
             gamepad1Ex.readButtons()
+            if (gamepad1Ex.wasJustPressed(GamepadKeys.Button.RIGHT_BUMPER)) {
+                index = when (index) {
+                    in 0..1 -> index + 1
+                    else -> 0
+                }
+            }
+            if (gamepad1Ex.wasJustPressed(GamepadKeys.Button.LEFT_BUMPER)) {
+                index = when (index) {
+                    in 1..2 -> index - 1
+                    else -> 2
+                }
+            }
 
-            val contourResult = cvContainer.pipeline.contourResults[0]?.let {
+            val contourResults = arrayOf(
+                    cvContainer.pipeline.contourResult1?.let {
+                if (useStandardized) it.standardized else it
+            },
+                    cvContainer.pipeline.contourResult2?.let {
+                if (useStandardized) it.standardized else it
+            },
+                    cvContainer.pipeline.contourResult3?.let {
                 if (useStandardized) it.standardized else it
             }
+            )
+            val contourResult = contourResults[index]
 
             telemetry.addData("Standardized", useStandardized)
             telemetry.addLine()
@@ -85,19 +105,8 @@ class SignalVisionTestOpMode: LinearOpMode() {
                 gamepad1.b -> useStandardized = false
             }
 
-            when {
-                gamepad1Ex.wasJustPressed(GamepadKeys.Button.DPAD_DOWN) -> webcamServoPosition -= 0.08
-                gamepad1Ex.wasJustPressed(GamepadKeys.Button.DPAD_UP) -> webcamServoPosition += 0.08
-                gamepad1Ex.wasJustPressed(GamepadKeys.Button.DPAD_LEFT) -> webcamServoPosition -= 0.04
-                gamepad1Ex.wasJustPressed(GamepadKeys.Button.DPAD_RIGHT) -> webcamServoPosition += 0.04
-            }
-            webcamServoPosition = webcamServoPosition.rangeClip(0.0, 1.0)
-            webcamServo.position = webcamServoPosition
-            telemetry.addData("Webcam Servo Position", webcamServoPosition)
-
             telemetry.update()
         }
-
 
     }
 }

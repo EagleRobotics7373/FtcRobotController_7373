@@ -15,7 +15,9 @@ import org.opencv.imgproc.Imgproc.*
 class SignalVisionPipeline() : ResolutionPipeline() {
 
     // Public variable allowing OpModes to access contour details
-    var contourResults: Array<ContourResult?> = arrayOf(null, null, null)
+    var contourResult1: ContourResult? = null
+    var contourResult2: ContourResult? = null
+    var contourResult3: ContourResult? = null
 
     // The mat that we will analyze, alone with the channel number we need to extract from HSV
     private var subMat: Mat = Mat()
@@ -68,7 +70,6 @@ class SignalVisionPipeline() : ResolutionPipeline() {
                 )
             }
 
-
             val drawingMat = when(MAT_OUTPUT_NUM) {
                 0       -> input
                 1       -> hlsMat
@@ -78,18 +79,19 @@ class SignalVisionPipeline() : ResolutionPipeline() {
                 else    -> thresholdResultsMerged
             }
             val contours = arrayOf(emptyList<MatOfPoint>().toMutableList(), emptyList<MatOfPoint>().toMutableList(), emptyList<MatOfPoint>().toMutableList())
-            val hierarchy = Mat()
+            val hierarchy = arrayOf(Mat(), Mat(), Mat())
             for (i in 0..2) {
                 findContours(
                         thresholdResults[i],                    // original mat
                         contours[i],                            // resultant list of contours
-                        hierarchy,                              // hierarchy of contours
+                        hierarchy[i],                              // hierarchy of contours
                         RETR_TREE,                      // contour retrieval mode
                         CHAIN_APPROX_SIMPLE             // contour approximation method
                 )
             }
 
-            val contoursCmpltd = arrayOf(contours[0].mapIndexed { index, matOfPoint ->
+            val contoursCmpltd = arrayOf(
+                    contours[0].mapIndexed { index, matOfPoint ->
 
                 drawContours(
                         drawingMat,
@@ -115,7 +117,8 @@ class SignalVisionPipeline() : ResolutionPipeline() {
                 return@mapIndexed ContourResult(
                         Point(minX.toDouble(), minY.toDouble()),
                         Point(maxX.toDouble(), maxY.toDouble()))
-            }, contours[1].mapIndexed { index, matOfPoint ->
+            },
+                    contours[1].mapIndexed { index, matOfPoint ->
 
                 drawContours(
                         drawingMat,
@@ -141,7 +144,8 @@ class SignalVisionPipeline() : ResolutionPipeline() {
                 return@mapIndexed ContourResult(
                         Point(minX.toDouble(), minY.toDouble()),
                         Point(maxX.toDouble(), maxY.toDouble()))
-            }, contours[2].mapIndexed { index, matOfPoint ->
+            },
+                    contours[2].mapIndexed { index, matOfPoint ->
 
                 drawContours(
                         drawingMat,
@@ -167,21 +171,24 @@ class SignalVisionPipeline() : ResolutionPipeline() {
                 return@mapIndexed ContourResult(
                         Point(minX.toDouble(), minY.toDouble()),
                         Point(maxX.toDouble(), maxY.toDouble()))
-            })
-
+            }
+            )
+            val minWidth = CONTOUR_ENTITY_MINWIDTH * resolution.scale
             val resCntur = arrayOf(
                     contoursCmpltd[0]
-                        .filter { it.width > CONTOUR_ENTITY_MINWIDTH * resolution.scale && it.min.y < input.rows() * (0.70) }
+                        .filter { it.width > minWidth && it.min.y < input.rows() * (0.70) }
                         .maxByOrNull { it.area },
                     contoursCmpltd[1]
-                        .filter { it.width > CONTOUR_ENTITY_MINWIDTH * resolution.scale && it.min.y < input.rows() * (0.70) }
+                        .filter { it.width > minWidth && it.min.y < input.rows() * (0.70) }
                         .maxByOrNull { it.area },
                     contoursCmpltd[2]
-                        .filter { it.width > CONTOUR_ENTITY_MINWIDTH * resolution.scale && it.min.y < input.rows() * (0.70) }
+                        .filter { it.width > minWidth && it.min.y < input.rows() * (0.70) }
                         .maxByOrNull { it.area }
             )
 
-            this.contourResults = resCntur
+            this.contourResult1 = resCntur[0]
+            this.contourResult2 = resCntur[1]
+            this.contourResult3 = resCntur[2]
 
             addLabels(drawingMat)
             return drawingMat
@@ -232,7 +239,7 @@ class SignalVisionPipeline() : ResolutionPipeline() {
         val detectorNameStartPoint = Point(5.0, 50.0)
                 .times(resolution.scale)
                 .coerceIn(mat)
-        putText(mat, "FREIGHT FRENZY ColorMarkerVision Pipeline", detectorNameStartPoint,
+        putText(mat, "POWER PLAY SignalVision Pipeline", detectorNameStartPoint,
                 FONT_HERSHEY_SIMPLEX, 0.55 * resolution.scale,
                 Scalar(inverseColorAtPoint(mat, detectorNameStartPoint)), 2)
 

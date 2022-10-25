@@ -5,8 +5,8 @@ import com.acmerobotics.dashboard.config.Config;
 @Config
 public class SignalVisionConstants {
     // Lower and upper bounds for cv::inRange() function
-    public static double[] CONTOUR_HUE_LOWER_BOUND = new double[]{18,  18,  18};
-    public static double[] CONTOUR_HUE_UPPER_BOUND = new double[]{40,  40,  40};
+    public static double[] CONTOUR_HUE_LOWER_BOUND = new double[]{0,  53,  128};
+    public static double[] CONTOUR_HUE_UPPER_BOUND = new double[]{38,  94,  165};
     public static double[] CONTOUR_SAT_LOWER_BOUND = new double[]{63,  63,  63};
     public static double[] CONTOUR_SAT_UPPER_BOUND = new double[]{255, 255, 255};
     public static double[] CONTOUR_LUM_LOWER_BOUND = new double[]{40,  40,  40};
