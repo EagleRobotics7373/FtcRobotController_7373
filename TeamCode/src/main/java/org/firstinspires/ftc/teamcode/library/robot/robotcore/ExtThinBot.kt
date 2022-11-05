@@ -12,12 +12,14 @@ class ExtThinBot(_hardwareMap: HardwareMap): BaseRobot(_hardwareMap) {
     @JvmField val linearActuatorMotor : DcMotorEx = hwInit("linearActuatorMotor")
     @JvmField val liftMotor : DcMotorEx = hwInit("liftMotor")
     @JvmField val clawServo : Servo = hwInit("clawServo")
+    @JvmField val odometryRight : DcMotorEx = hwInit("odometryRight")
+    @JvmField val odometryCenter : DcMotorEx = hwInit("odometryCenter")
 
     @JvmField val liftClawSystem = LiftClawSystem(linearActuatorMotor, liftMotor, clawServo)
 
     @JvmField val imuControllerC = IMUController(hardwareMap, id = 'C')
     override val holonomicRR: HolonomicRR = HolonomicRR(imuControllerC, frontLeftMotor, backLeftMotor, backRightMotor, frontRightMotor,
-                                    TwoWheelOdometryLocalizer(frontLeftMotor, backLeftMotor, imuControllerC))
+                                    TwoWheelOdometryLocalizer(odometryRight, odometryCenter, imuControllerC))
 
 
 }

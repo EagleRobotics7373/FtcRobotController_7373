@@ -15,6 +15,7 @@ import org.firstinspires.ftc.teamcode.library.vision.powerplay.SignalVisionPipel
 class SignalVisionTestOpMode: LinearOpMode() {
 
     var useStandardized = false
+    var index = 0
 
     override fun runOpMode() {
 
@@ -32,6 +33,20 @@ class SignalVisionTestOpMode: LinearOpMode() {
             },
         true)
 
+        FtcDashboard.getInstance().addConfigVariable(
+                this::class.simpleName,
+                "index",
+                object: ValueProvider<Int> {
+                    override fun get(): Int = index
+
+                    override fun set(value: Int?) {
+                        if (value != null) {
+                            index = value
+                        }
+                    }
+                }
+        )
+
         val gamepad1Ex = GamepadEx(gamepad1)
 
         val cvContainer = VisionFactory.createOpenCv(
@@ -40,8 +55,6 @@ class SignalVisionTestOpMode: LinearOpMode() {
             SignalVisionPipeline())
         cvContainer.start()
 
-        var index = 0
-
         waitForStart()
 
         cvContainer.pipeline.tracking = true
@@ -49,60 +62,30 @@ class SignalVisionTestOpMode: LinearOpMode() {
 
         while (opModeIsActive()) {
             gamepad1Ex.readButtons()
-            if (gamepad1Ex.wasJustPressed(GamepadKeys.Button.RIGHT_BUMPER)) {
-                index = when (index) {
-                    in 0..1 -> index + 1
-                    else -> 0
+
+            val contourResults = cvContainer.pipeline.contourResults
+
+            for (i in contourResults.indices){
+                telemetry.addData("Index", i)
+                telemetry.addLine()
+
+                if (contourResults[i] == null) {
+                    telemetry.addData("\tDetected", "No")
+                    telemetry.addLine()
+                } else {
+                    telemetry.addData("\tDetected", "Yes")
+                    telemetry.addData("\tMin", contourResults[i]!!.min.toString())
+                    telemetry.addData("\tMax", contourResults[i]!!.min.toString())
+                    telemetry.addData("\tArea", contourResults[i]!!.area.toString())
+                    telemetry.addData("\tRatio", contourResults[i]!!.ratio.toString())
+                    telemetry.addData("\tWidth", contourResults[i]!!.width.toString())
+                    telemetry.addData("\tValid", contourResults[i]!!.valid.toString())
+
+                    val centerX = (contourResults[i]!!.min.x + contourResults[i]!!.max.x) / 2
+                    telemetry.addData("\tCenter X", centerX)
+                    telemetry.addLine()
+
                 }
-            }
-            if (gamepad1Ex.wasJustPressed(GamepadKeys.Button.LEFT_BUMPER)) {
-                index = when (index) {
-                    in 1..2 -> index - 1
-                    else -> 2
-                }
-            }
-
-            val contourResults = arrayOf(
-                    cvContainer.pipeline.contourResult1?.let {
-                if (useStandardized) it.standardized else it
-            },
-                    cvContainer.pipeline.contourResult2?.let {
-                if (useStandardized) it.standardized else it
-            },
-                    cvContainer.pipeline.contourResult3?.let {
-                if (useStandardized) it.standardized else it
-            }
-            )
-            val contourResult = contourResults[index]
-
-            telemetry.addData("Standardized", useStandardized)
-            telemetry.addLine()
-
-            if (contourResult == null) {
-                telemetry.addData("Detected", "No")
-            } else {
-                telemetry.addData("Detected", "Yes")
-                telemetry.addData("Min", contourResult.min.toString())
-                telemetry.addData("Max", contourResult.min.toString())
-                telemetry.addData("Area", contourResult.area.toString())
-                telemetry.addData("Ratio", contourResult.ratio.toString())
-                telemetry.addData("Width", contourResult.width.toString())
-
-                val centerX = (contourResult.min.x + contourResult.max.x)/2
-                telemetry.addData("Center X", centerX)
-
-                if (useStandardized) {
-                    telemetry.addData("Field position (by center x)", when (centerX) {
-                        in 0.0..SignalVisionConstants.BOUNDARY_FIRST -> "LEFT"
-                        in SignalVisionConstants.BOUNDARY_FIRST..SignalVisionConstants.BOUNDARY_SECOND -> "CENTER"
-                        else -> "RIGHT"
-                    })
-                }
-            }
-
-            when {
-                gamepad1.a -> useStandardized = true
-                gamepad1.b -> useStandardized = false
             }
 
             telemetry.update()

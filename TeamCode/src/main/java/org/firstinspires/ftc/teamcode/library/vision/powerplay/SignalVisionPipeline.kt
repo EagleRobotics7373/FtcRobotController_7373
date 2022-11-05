@@ -15,14 +15,12 @@ import org.opencv.imgproc.Imgproc.*
 class SignalVisionPipeline() : ResolutionPipeline() {
 
     // Public variable allowing OpModes to access contour details
-    var contourResult1: ContourResult? = null
-    var contourResult2: ContourResult? = null
-    var contourResult3: ContourResult? = null
+    var contourResults: List<ContourResult?> = List(3) { null }
 
     // The mat that we will analyze, alone with the channel number we need to extract from HSV
     private var subMat: Mat = Mat()
     private var hlsMat: Mat = Mat()
-    private var thresholdResults: Array<Mat> = arrayOf(Mat(), Mat(), Mat())
+    private var thresholdResults = Array(3) { Mat() }
 
     override var resolution : ImageResolution = ImageResolution.R_720x480
 
@@ -32,23 +30,56 @@ class SignalVisionPipeline() : ResolutionPipeline() {
             // Blur the image for greater contour recognition accuracy
             blur(input, input, Size(5.0, 10.0))
 
-            subMat = input.submat((CUTOFF_TOP * input.rows()).toInt(), (CUTOFF_BOTTOM * input.rows()).toInt(), 0, input.cols())
+            subMat = input.submat((CUTOFF_TOP * input.rows()).toInt(), (CUTOFF_BOTTOM * input.rows()).toInt(), (CUTOFF_LEFT * input.cols()).toInt(), (CUTOFF_RIGHT * input.cols()).toInt())
 
             // Convert our input, in RGB format, to HLS (hue, luminosity, saturation)
             cvtColor(subMat, hlsMat, COLOR_RGB2HLS)
+
+            val contourHueLowerBound = arrayOf(
+                    CONTOUR_HUE_LOWER_BOUND_RED,
+                    CONTOUR_HUE_LOWER_BOUND_GREEN,
+                    CONTOUR_HUE_LOWER_BOUND_BLUE
+            )
+            val contourHueUpperBound = arrayOf(
+                    CONTOUR_HUE_UPPER_BOUND_RED,
+                    CONTOUR_HUE_UPPER_BOUND_GREEN,
+                    CONTOUR_HUE_UPPER_BOUND_BLUE
+            )
+
+            val contourLumLowerBound = arrayOf(
+                    CONTOUR_LUM_LOWER_BOUND_RED,
+                    CONTOUR_LUM_LOWER_BOUND_GREEN,
+                    CONTOUR_LUM_LOWER_BOUND_BLUE
+            )
+            val contourLumUpperBound = arrayOf(
+                    CONTOUR_LUM_UPPER_BOUND_RED,
+                    CONTOUR_LUM_UPPER_BOUND_GREEN,
+                    CONTOUR_LUM_UPPER_BOUND_BLUE
+            )
+
+            val contourSatLowerBound = arrayOf(
+                    CONTOUR_SAT_LOWER_BOUND_RED,
+                    CONTOUR_SAT_LOWER_BOUND_GREEN,
+                    CONTOUR_SAT_LOWER_BOUND_BLUE
+            )
+            val contourSatUpperBound = arrayOf(
+                    CONTOUR_SAT_UPPER_BOUND_RED,
+                    CONTOUR_SAT_UPPER_BOUND_GREEN,
+                    CONTOUR_SAT_UPPER_BOUND_BLUE
+            )
 
             // Threshold the HLS mat to only include objects within desired HLS range
             for (i in 0..2) {
                 inRange(
                         hlsMat,                             // original mat
                         Scalar(                             // lower bound for threshold
-                                CONTOUR_HUE_LOWER_BOUND[i],
-                                CONTOUR_LUM_LOWER_BOUND[i],
-                                CONTOUR_SAT_LOWER_BOUND[i]),
+                                contourHueLowerBound[i],
+                                contourLumLowerBound[i],
+                                contourSatLowerBound[i]),
                         Scalar(                             // upper bound for threshold
-                                CONTOUR_HUE_UPPER_BOUND[i],
-                                CONTOUR_LUM_UPPER_BOUND[i],
-                                CONTOUR_SAT_UPPER_BOUND[i]),
+                                contourHueUpperBound[i],
+                                contourLumUpperBound[i],
+                                contourSatUpperBound[i]),
                         thresholdResults[i]                     // resultant mat
                 )
             }
@@ -78,117 +109,52 @@ class SignalVisionPipeline() : ResolutionPipeline() {
                 4       -> thresholdResults[2]
                 else    -> thresholdResultsMerged
             }
-            val contours = arrayOf(emptyList<MatOfPoint>().toMutableList(), emptyList<MatOfPoint>().toMutableList(), emptyList<MatOfPoint>().toMutableList())
-            val hierarchy = arrayOf(Mat(), Mat(), Mat())
+
+            val contours = List(3) { emptyList<MatOfPoint>().toMutableList() }
+            val hierarchy = Array(3) { Mat() }
             for (i in 0..2) {
                 findContours(
-                        thresholdResults[i],                    // original mat
-                        contours[i],                            // resultant list of contours
-                        hierarchy[i],                              // hierarchy of contours
+                        thresholdResults[i],            // original mat
+                        contours[i],                    // resultant list of contours
+                        hierarchy[i],                   // hierarchy of contours
                         RETR_TREE,                      // contour retrieval mode
                         CHAIN_APPROX_SIMPLE             // contour approximation method
                 )
             }
 
-            val contoursCmpltd = arrayOf(
-                    contours[0].mapIndexed { index, matOfPoint ->
+            val contoursCmpltd = contours.mapIndexed { _, contour ->
+                contour.mapIndexed map@{ index, matOfPoint ->
+                    drawContours(
+                            drawingMat,
+                            contour,
+                            index,
+                            Scalar.all(150.0),
+                            3
+                    )
 
-                drawContours(
-                        drawingMat,
-                        contours[0],
-                        index,
-                        Scalar.all(150.0),
-                        5
-                )
+                    var minX = Int.MAX_VALUE
+                    var minY = Int.MAX_VALUE
+                    var maxX = Int.MIN_VALUE
+                    var maxY = Int.MIN_VALUE
+                    for (point in matOfPoint.toArray()) {
+                        if (point.x < minX) minX = point.x.toInt()
+                        if (point.y < minY) minY = point.y.toInt()
+                        if (point.x > maxX) maxX = point.x.toInt()
+                        if (point.y > maxY) maxY = point.y.toInt()
+                    }
 
-                var minX = Int.MAX_VALUE
-                var minY = Int.MAX_VALUE
-                var maxX = Int.MIN_VALUE
-                var maxY = Int.MIN_VALUE
-                for (point in matOfPoint.toArray()) {
-                    if (point.x < minX) minX = point.x.toInt()
-                    if (point.y < minY) minY = point.y.toInt()
-                    if (point.x > maxX) maxX = point.x.toInt()
-                    if (point.y > maxY) maxY = point.y.toInt()
+                    println("CONTOUR $index min=($minX, $minY) max=($maxX, $maxY)")
+
+                    return@map ContourResult(
+                            Point(minX.toDouble(), minY.toDouble()),
+                            Point(maxX.toDouble(), maxY.toDouble()))
                 }
-
-                println("CONTOUR $index min=($minX, $minY) max=($maxX, $maxY)")
-
-                return@mapIndexed ContourResult(
-                        Point(minX.toDouble(), minY.toDouble()),
-                        Point(maxX.toDouble(), maxY.toDouble()))
-            },
-                    contours[1].mapIndexed { index, matOfPoint ->
-
-                drawContours(
-                        drawingMat,
-                        contours[1],
-                        index,
-                        Scalar.all(150.0),
-                        5
-                )
-
-                var minX = Int.MAX_VALUE
-                var minY = Int.MAX_VALUE
-                var maxX = Int.MIN_VALUE
-                var maxY = Int.MIN_VALUE
-                for (point in matOfPoint.toArray()) {
-                    if (point.x < minX) minX = point.x.toInt()
-                    if (point.y < minY) minY = point.y.toInt()
-                    if (point.x > maxX) maxX = point.x.toInt()
-                    if (point.y > maxY) maxY = point.y.toInt()
-                }
-
-                println("CONTOUR $index min=($minX, $minY) max=($maxX, $maxY)")
-
-                return@mapIndexed ContourResult(
-                        Point(minX.toDouble(), minY.toDouble()),
-                        Point(maxX.toDouble(), maxY.toDouble()))
-            },
-                    contours[2].mapIndexed { index, matOfPoint ->
-
-                drawContours(
-                        drawingMat,
-                        contours[2],
-                        index,
-                        Scalar.all(150.0),
-                        5
-                )
-
-                var minX = Int.MAX_VALUE
-                var minY = Int.MAX_VALUE
-                var maxX = Int.MIN_VALUE
-                var maxY = Int.MIN_VALUE
-                for (point in matOfPoint.toArray()) {
-                    if (point.x < minX) minX = point.x.toInt()
-                    if (point.y < minY) minY = point.y.toInt()
-                    if (point.x > maxX) maxX = point.x.toInt()
-                    if (point.y > maxY) maxY = point.y.toInt()
-                }
-
-                println("CONTOUR $index min=($minX, $minY) max=($maxX, $maxY)")
-
-                return@mapIndexed ContourResult(
-                        Point(minX.toDouble(), minY.toDouble()),
-                        Point(maxX.toDouble(), maxY.toDouble()))
             }
-            )
-            val minWidth = CONTOUR_ENTITY_MINWIDTH * resolution.scale
-            val resCntur = arrayOf(
-                    contoursCmpltd[0]
-                        .filter { it.width > minWidth && it.min.y < input.rows() * (0.70) }
-                        .maxByOrNull { it.area },
-                    contoursCmpltd[1]
-                        .filter { it.width > minWidth && it.min.y < input.rows() * (0.70) }
-                        .maxByOrNull { it.area },
-                    contoursCmpltd[2]
-                        .filter { it.width > minWidth && it.min.y < input.rows() * (0.70) }
-                        .maxByOrNull { it.area }
-            )
-
-            this.contourResult1 = resCntur[0]
-            this.contourResult2 = resCntur[1]
-            this.contourResult3 = resCntur[2]
+            val resCntur = contoursCmpltd.mapIndexed { _, contour ->
+                contour.filter { it.width > CONTOUR_ENTITY_MINWIDTH * resolution.scale && it.min.y < input.rows() * (0.70) }
+                    .maxByOrNull { it.area }
+            }
+            this.contourResults = resCntur
 
             addLabels(drawingMat)
             return drawingMat
@@ -206,6 +172,7 @@ class SignalVisionPipeline() : ResolutionPipeline() {
         val height = max.y - min.y
         val ratio = width.toDouble() / height
         val area = width * height
+        val valid = ratio in RATIO_LOWER_BOUND..RATIO_UPPER_BOUND
 
         val standardized: ContourResult
         get() = ContourResult(
@@ -232,7 +199,7 @@ class SignalVisionPipeline() : ResolutionPipeline() {
                 .times(resolution.scale)
                 .coerceIn(mat)
         putText(mat, "Eagle Robotics Team 7373", teamNameStartPoint,
-                FONT_HERSHEY_SIMPLEX, 1 * resolution.scale,
+                FONT_HERSHEY_SIMPLEX, 0.5 * resolution.scale,
                 Scalar(inverseColorAtPoint(mat, teamNameStartPoint)), 2)
 
         // Place text indicating the detector purpose (below the team name)
@@ -240,7 +207,7 @@ class SignalVisionPipeline() : ResolutionPipeline() {
                 .times(resolution.scale)
                 .coerceIn(mat)
         putText(mat, "POWER PLAY SignalVision Pipeline", detectorNameStartPoint,
-                FONT_HERSHEY_SIMPLEX, 0.55 * resolution.scale,
+                FONT_HERSHEY_SIMPLEX, 0.25 * resolution.scale,
                 Scalar(inverseColorAtPoint(mat, detectorNameStartPoint)), 2)
 
         // Below code left in-place in case specfic result should be shown on camera feed

@@ -43,7 +43,7 @@ class TeleOpCore: OpMode() {
         get() = false //gamepad1.left_bumper && gamepad1.right_bumper
 
     private val gamepad2CanControlExtras: Boolean
-        get() = true //gamepad2.right_bumper
+        get() = false //gamepad2.right_bumper
 
     private lateinit var toggleGamepad1TouchpadPress: ToggleButtonWatcher
     private lateinit var toggleGamepad2TouchpadPress: ToggleButtonWatcher
@@ -51,6 +51,7 @@ class TeleOpCore: OpMode() {
     override fun init() {
         robot = ExtThinBot(hardwareMap)
         robot.holonomic.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE)
+        robot.linearActuatorMotor.mode = DcMotor.RunMode.STOP_AND_RESET_ENCODER
 
         gamepad1Ex = GamepadEx(gamepad1)
         gamepad2Ex = GamepadEx(gamepad2)
@@ -77,8 +78,6 @@ class TeleOpCore: OpMode() {
 
             // Reverse drivetrain and fod enable
             when {
-                gamepad1.a -> { reverse = true; fod = false }
-                gamepad1.b -> { reverse = false; fod = false }
                 gamepad1Ex.wasJustPressed(Y) -> { reverse = !reverse; fod = false }
                 gamepad1Ex.wasJustPressed(X) -> fod = true
                 gamepad1.x && gamepad1.start -> zeroAngle = robot.imuControllerC.getHeading()
@@ -101,13 +100,13 @@ class TeleOpCore: OpMode() {
         }
 
         // Manual lift control
-        var linearActuatorPower = if (gamepad2CanControlExtras
-                /*&& !(robot.linearActuatorMotor.currentPosition >= LiftClawSystem.LiftPosition.FLOOR.ticks1 && gamepad2.left_stick_y >= 0)*/) gamepad2.left_stick_y.toDouble()*0.5 else 0.0
-        // if (linearActuatorPower in -0.2..0.0) linearActuatorPower = -0.2
-        val liftPower = if (gamepad2CanControlExtras) -gamepad2.right_stick_y.toDouble() else 0.0
+        var linearActuatorPower = if (!gamepad2CanControlExtras) gamepad2.left_stick_y.toDouble()*0.5 else 0.0
+        if (linearActuatorPower in -0.2..0.0 && robot.linearActuatorMotor.currentPosition < -100) linearActuatorPower = -0.2
+        else if (linearActuatorPower in 0.01..1.0) linearActuatorPower = 0.0
+        val liftPower = if (!gamepad2CanControlExtras) -gamepad2.right_stick_y.toDouble() else 0.0
         if (robot.linearActuatorMotor.mode == DcMotor.RunMode.RUN_TO_POSITION) {
             if (gamepad2.left_stick_y.absoluteValue > 0 ) robot.liftClawSystem.liftManual(0.0, 0.0)
-        } else if (gamepad2.y && !gamepad2CanControlExtras) {
+        } else if (gamepad2.y && gamepad2CanControlExtras) {
             robot.liftClawSystem.liftManual(-0.10, 0.0)
         } else {
             robot.liftClawSystem.liftManual(linearActuatorPower, liftPower)
@@ -116,6 +115,11 @@ class TeleOpCore: OpMode() {
         when {
             gamepad2.a -> robot.liftClawSystem.clawOpen()
             gamepad2.b -> robot.liftClawSystem.clawClose()
+        }
+
+        // Recalibrate Lift Bottom Position
+        if (gamepad2Ex.wasJustPressed(Y)) {
+            robot.linearActuatorMotor.mode = DcMotor.RunMode.STOP_AND_RESET_ENCODER
         }
 
         val currentTime = elapsedTime.milliseconds()
@@ -140,8 +144,6 @@ class TeleOpCore: OpMode() {
         telemetry.addData("backRightMotor", robot.backRightMotor.power)
         telemetry.addData("frontLeftMotor", robot.frontLeftMotor.power)
         telemetry.addData("backLeftMotor", robot.backLeftMotor.power)
-        telemetry.addLine()
-        telemetry.addData("Gamepad2 can control extras", gamepad2CanControlExtras)
         telemetry.addLine()
         telemetry.addData("gamepad2.right_trigger", gamepad2.right_trigger)
         telemetry.addData("gamepad2.left_trigger", gamepad2.left_trigger)

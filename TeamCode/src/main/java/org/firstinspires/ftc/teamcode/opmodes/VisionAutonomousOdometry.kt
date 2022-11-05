@@ -12,18 +12,21 @@ import org.firstinspires.ftc.teamcode.library.robot.robotcore.ExtThinBot
 import org.firstinspires.ftc.teamcode.library.vision.base.VisionFactory
 import org.firstinspires.ftc.teamcode.library.vision.powerplay.SignalVisionPipeline
 
-@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name = "Vision Autonomous", group = "Main")
-class VisionAutonomous : BaseAutonomous<ExtThinBot>() {
+@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name = "Vision Autonomous (Odometry)", group = "Main")
+class VisionAutonomousOdometry : BaseAutonomous<ExtThinBot>() {
 
     private var allianceColor: AllianceColor by config.custom("Alliance Color", RED, BLUE)
     private var startingPosition: StartingPosition by config.custom("Starting Position", LEFT, RIGHT)
-    private var signalState: SignalState by config.custom("Default Parking Position", SignalState.CENTER, SignalState.LEFT, SignalState.RIGHT)
+    private var signalState: SignalState by config.custom("Default Parking Position", SignalState.LEFT, SignalState.CENTER, SignalState.RIGHT)
     private var extraDelayBeforeStart: Int by config.int("Delay Before First Action", 0, 0..20000 step 1000)
     private var webcamScanningDuration: Int by config.int("Webcam Scanning Duration", 2000, 0..5000 step 500)
+    private var safeModeActive: Boolean by config.boolean("Safe Mode", true)
+    private var safeModeErrorThreshold: Int by config.int("Safe Mode Error Threshold", 10, 0..30 step 2)
 
     override fun runOpMode() {
         robot = ExtThinBot(hardwareMap)
         super.autonomousConfig()
+        robot.holonomicRR.safeModeErrorThreshold = safeModeErrorThreshold
 
         val cvContainer = VisionFactory.createOpenCv(
                 hardwareMap,
@@ -36,6 +39,15 @@ class VisionAutonomous : BaseAutonomous<ExtThinBot>() {
         if (opModeIsActive()) {
             cvContainer.pipeline.tracking = true
             cvContainer.pipeline.shouldKeepTracking = true
+
+            robot.holonomicRR.poseEstimate = Pose2d(
+                    when (startingPosition) {
+                        LEFT -> -36.0
+                        RIGHT -> 36.0
+                    } reverseIf BLUE,
+                    -63.0 reverseIf BLUE,
+                    -Math.PI / 2 reverseIf BLUE
+            )
 
             sleep(webcamScanningDuration.toLong())
 
@@ -51,22 +63,34 @@ class VisionAutonomous : BaseAutonomous<ExtThinBot>() {
 
             sleep(extraDelayBeforeStart.toLong())
 
-            robot.holonomic.runWithoutEncoderVectored(
-                    when (signalState) {
-                        SignalState.LEFT -> 0.75
-                        SignalState.RIGHT -> -0.75
-                        else -> 0.0 },
-                    0.0, 0.0, 0.0
-            )
-            sleep(1000L)
-            robot.holonomic.stop()
 
-            robot.holonomic.runWithoutEncoderVectored(0.0, -0.75, 0.0, 0.0)
-            sleep(700L)
-            robot.holonomic.stop()
+            if (signalState != SignalState.CENTER) {
+                builder().strafeTo(
+                        Vector2d(
+                                when (startingPosition) {
+                                    LEFT -> -36.0
+                                    RIGHT -> 36.0
+                                } + signalState.shift reverseIf BLUE,
+                                -63.0 reverseIf BLUE
+                        )
+                ).buildAndRun(safeMode = safeModeActive)
+            }
+            safeModeCheck(safeModeActive)
+
+            builder().strafeTo(
+                    Vector2d(
+                            when (startingPosition) {
+                                LEFT -> -36.0
+                                RIGHT -> 36.0
+                            } + signalState.shift reverseIf BLUE,
+                            -36.0 reverseIf BLUE
+                    )
+            ).buildAndRun(safeMode = safeModeActive)
+            safeModeCheck(safeModeActive)
         }
 
     }
 
+    private infix fun Double.reverseIf(testColor: AllianceColor) : Double = if (allianceColor == testColor) -this else this
 
 }
