@@ -13,7 +13,7 @@ enum class StartingPosition {
 }
 
 enum class SignalState(var shift: Double) {
-    LEFT(-24.0),
+    LEFT(-20.0),
     CENTER(0.0),
-    RIGHT(24.0)
+    RIGHT(20.0)
 }

@@ -14,7 +14,7 @@ public class SignalVisionConstants {
 
     public static double CONTOUR_SAT_LOWER_BOUND_RED = 63;
     public static double CONTOUR_SAT_UPPER_BOUND_RED = 255;
-    public static double CONTOUR_SAT_LOWER_BOUND_GREEN = 63;
+    public static double CONTOUR_SAT_LOWER_BOUND_GREEN = 50;
     public static double CONTOUR_SAT_UPPER_BOUND_GREEN = 110;
     public static double CONTOUR_SAT_LOWER_BOUND_BLUE = 63;
     public static double CONTOUR_SAT_UPPER_BOUND_BLUE = 255;

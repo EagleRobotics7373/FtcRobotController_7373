@@ -52,6 +52,7 @@ class TeleOpCore: OpMode() {
         robot = ExtThinBot(hardwareMap)
         robot.holonomic.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE)
         robot.linearActuatorMotor.mode = DcMotor.RunMode.STOP_AND_RESET_ENCODER
+        robot.liftMotor.mode = DcMotor.RunMode.STOP_AND_RESET_ENCODER
 
         gamepad1Ex = GamepadEx(gamepad1)
         gamepad2Ex = GamepadEx(gamepad2)
@@ -153,20 +154,5 @@ class TeleOpCore: OpMode() {
         telemetry.addData("Z Orientation", orientation.firstAngle)
         telemetry.addData("Y Orientation", orientation.secondAngle)
         telemetry.addData("X Orientation", orientation.thirdAngle)
-        telemetry.addLine()
-        telemetry.addData("Gamepad1 Touchpad Press", gamepad1.touchpad)
-        telemetry.addData("Gamepad1 Finger1 X", gamepad1.touchpad_finger_1_x)
-        telemetry.addData("Gamepad1 Finger1 Y", gamepad1.touchpad_finger_1_y)
-        telemetry.addData("Gamepad1 Finger 1 Press", gamepad1.touchpad_finger_1)
-        telemetry.addData("Gamepad1 Finger2 X", gamepad1.touchpad_finger_2_x)
-        telemetry.addData("Gamepad1 Finger2 Y", gamepad1.touchpad_finger_2_y)
-        telemetry.addData("Gamepad1 Finger 2 Press", gamepad1.touchpad_finger_2)
-        telemetry.addData("Gamepad2 Touchpad Press", gamepad2.touchpad)
-        telemetry.addData("Gamepad2 Finger1 X", gamepad2.touchpad_finger_1_x)
-        telemetry.addData("Gamepad2 Finger1 Y", gamepad2.touchpad_finger_1_y)
-        telemetry.addData("Gamepad1 Finger 1 Press", gamepad2.touchpad_finger_1)
-        telemetry.addData("Gamepad2 Finger2 X", gamepad2.touchpad_finger_2_x)
-        telemetry.addData("Gamepad2 Finger2 Y", gamepad2.touchpad_finger_2_y)
-        telemetry.addData("Gamepad1 Finger 2 Press", gamepad2.touchpad_finger_2)
     }
 }
