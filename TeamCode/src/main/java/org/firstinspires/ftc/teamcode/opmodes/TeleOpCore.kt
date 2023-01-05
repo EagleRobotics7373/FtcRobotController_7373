@@ -1,7 +1,6 @@
 package org.firstinspires.ftc.teamcode.opmodes
 
 import com.arcrobotics.ftclib.gamepad.GamepadEx
-import com.arcrobotics.ftclib.gamepad.GamepadKeys
 import com.arcrobotics.ftclib.gamepad.GamepadKeys.Button.*
 import com.qualcomm.robotcore.eventloop.opmode.OpMode
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
@@ -12,7 +11,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference
 import org.firstinspires.ftc.teamcode.library.functions.ToggleButtonWatcher
 import org.firstinspires.ftc.teamcode.library.robot.robotcore.ExtThinBot
-import org.firstinspires.ftc.teamcode.library.robot.systems.meet1.LiftClawSystem
+import org.firstinspires.ftc.teamcode.library.robot.systems.lt.DualServoClawLift
 import kotlin.math.absoluteValue
 import kotlin.math.pow
 
@@ -32,8 +31,7 @@ class TeleOpCore: OpMode() {
     private var zeroAngle = 0.0
     private var lastTimeRead = 0.0
 
-    private var liftPowerAuto1 = -0.8
-    private var liftPowerAuto2 = -0.8
+    private var liftPowerAuto = -0.8
 
     private lateinit var elapsedTime: ElapsedTime
 
@@ -52,7 +50,6 @@ class TeleOpCore: OpMode() {
         robot = ExtThinBot(hardwareMap)
         robot.holonomic.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE)
         robot.linearActuatorMotor.mode = DcMotor.RunMode.STOP_AND_RESET_ENCODER
-        robot.liftMotor.mode = DcMotor.RunMode.STOP_AND_RESET_ENCODER
 
         gamepad1Ex = GamepadEx(gamepad1)
         gamepad2Ex = GamepadEx(gamepad2)
@@ -95,9 +92,9 @@ class TeleOpCore: OpMode() {
 
         // Cycle lift positions
         when {
-            gamepad2Ex.wasJustPressed(RIGHT_BUMPER) -> robot.liftClawSystem.liftCycleUp(liftPowerAuto1, liftPowerAuto2)
-            gamepad2Ex.wasJustPressed(LEFT_BUMPER) -> robot.liftClawSystem.liftCycleDown(-liftPowerAuto1/8, -liftPowerAuto2)
-            gamepad2Ex.wasJustPressed(X) -> robot.liftClawSystem.liftAuto(LiftClawSystem.LiftPosition.FLOOR.ticks1, LiftClawSystem.LiftPosition.FLOOR.ticks2, liftPowerAuto1, liftPowerAuto2)
+            gamepad2Ex.wasJustPressed(RIGHT_BUMPER) -> robot.dualServoClawLift.liftCycleUp(liftPowerAuto)
+            gamepad2Ex.wasJustPressed(LEFT_BUMPER) -> robot.dualServoClawLift.liftCycleDown(-liftPowerAuto/8)
+            gamepad2Ex.wasJustPressed(X) -> robot.dualServoClawLift.liftAuto(DualServoClawLift.LiftPosition.FLOOR, liftPowerAuto)
         }
 
         // Manual lift control
@@ -106,16 +103,16 @@ class TeleOpCore: OpMode() {
         else if (linearActuatorPower in 0.01..1.0) linearActuatorPower = 0.0
         val liftPower = if (!gamepad2CanControlExtras) -gamepad2.right_stick_y.toDouble() else 0.0
         if (robot.linearActuatorMotor.mode == DcMotor.RunMode.RUN_TO_POSITION) {
-            if (gamepad2.left_stick_y.absoluteValue > 0 ) robot.liftClawSystem.liftManual(0.0, 0.0)
+            if (gamepad2.left_stick_y.absoluteValue > 0 ) robot.dualServoClawLift.liftManual(0.0)
         } else if (gamepad2.y && gamepad2CanControlExtras) {
-            robot.liftClawSystem.liftManual(-0.10, 0.0)
+            robot.dualServoClawLift.liftManual(-0.10)
         } else {
-            robot.liftClawSystem.liftManual(linearActuatorPower, liftPower)
+            robot.dualServoClawLift.liftManual(linearActuatorPower)
         }
 
         when {
-            gamepad2.a -> robot.liftClawSystem.clawOpen()
-            gamepad2.b -> robot.liftClawSystem.clawClose()
+            gamepad2.a -> robot.dualServoClawLift.clawOpen()
+            gamepad2.b -> robot.dualServoClawLift.clawClose()
         }
 
         // Recalibrate Lift Bottom Position
@@ -135,7 +132,6 @@ class TeleOpCore: OpMode() {
         telemetry.addData("Linear actuator power", linearActuatorPower)
         telemetry.addData("Lift power", liftPower)
         telemetry.addData("Linear actuator motor position", robot.linearActuatorMotor.currentPosition)
-        telemetry.addData("Lift motor position", robot.liftMotor.currentPosition)
         telemetry.addLine()
         telemetry.addData("Vertical", vertical)
         telemetry.addData("Horizontal", horizontal)

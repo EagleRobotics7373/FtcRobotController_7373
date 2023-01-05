@@ -105,7 +105,7 @@ class VisionAutonomousOdometry : BaseAutonomous<ExtThinBot>() {
 
             builder().lineToSplineHeading(
                     Pose2d(
-                            -19.5 reverseIf RIGHT
+                            -22.0 reverseIf RIGHT
                                     reverseIf BLUE, -17.0 reverseIf BLUE,
                             -Math.PI / 2 reverseIf BLUE
                     ),
@@ -133,7 +133,7 @@ class VisionAutonomousOdometry : BaseAutonomous<ExtThinBot>() {
                     )
             ).buildAndRun()
 
-            robot.liftClawSystem.liftAuto(0, -20, 0.1, 0.8)
+            robot.liftClawSystem.liftAuto(0, -20, 0.01, 0.8)
             sleep(1000)
         }
 
