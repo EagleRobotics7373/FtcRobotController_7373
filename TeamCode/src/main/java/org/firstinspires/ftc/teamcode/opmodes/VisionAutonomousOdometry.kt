@@ -32,7 +32,6 @@ class VisionAutonomousOdometry : BaseAutonomous<ExtThinBot>() {
         robot.holonomicRR.safeModeErrorThreshold = safeModeErrorThreshold
 
         robot.linearActuatorMotor.mode = DcMotor.RunMode.STOP_AND_RESET_ENCODER
-        robot.liftMotor.mode = DcMotor.RunMode.STOP_AND_RESET_ENCODER
 
         val cvContainer = VisionFactory.createOpenCv(
                 hardwareMap,
@@ -87,8 +86,8 @@ class VisionAutonomousOdometry : BaseAutonomous<ExtThinBot>() {
             ).buildAndRun(safeModeActive)
             safeModeCheck(safeModeActive)
 
-            robot.liftClawSystem.liftAuto(-290, 0, -0.8, 0.8)
-            robot.liftClawSystem.clawOpen()
+            robot.dualServoClawLift.liftAuto(-290, -0.8)
+            robot.dualServoClawLift.clawOpen()
 
             builder().lineToSplineHeading(
                     Pose2d(
@@ -99,9 +98,9 @@ class VisionAutonomousOdometry : BaseAutonomous<ExtThinBot>() {
             ).buildAndRun()
 
             //Pick Up Cone
-            robot.liftClawSystem.clawClose()
+            robot.dualServoClawLift.clawClose()
             sleep(1000)
-            robot.liftClawSystem.liftAuto(-1000, 752, 0.3, 0.8)
+            robot.dualServoClawLift.liftAuto(-1000, 0.3)
 
             builder().lineToSplineHeading(
                     Pose2d(
@@ -117,7 +116,7 @@ class VisionAutonomousOdometry : BaseAutonomous<ExtThinBot>() {
 
             //Drop Off Cone
             sleep(100)
-            robot.liftClawSystem.clawOpen()
+            robot.dualServoClawLift.clawOpen()
 
             // Park
             builder().strafeTo(
@@ -133,7 +132,7 @@ class VisionAutonomousOdometry : BaseAutonomous<ExtThinBot>() {
                     )
             ).buildAndRun()
 
-            robot.liftClawSystem.liftAuto(0, -20, 0.01, 0.8)
+            robot.dualServoClawLift.liftAuto(0, 0.01)
             sleep(1000)
         }
 
