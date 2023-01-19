@@ -47,36 +47,33 @@ class LiftTest: OpMode() {
         }
 
         if (!autoMode) {
-            robot.liftClawSystem.liftManual(-gamepad2.left_stick_y.toDouble(), -gamepad2.right_stick_y.toDouble())
+            robot.dualServoClawLift.liftManual(gamepad2.left_stick_y.toDouble())
         } else {
-            robot.liftClawSystem.liftAuto(linearActuatorPosition, liftPosition, 1.0, 0.0)
+            robot.dualServoClawLift.liftAuto(linearActuatorPosition, 1.0)
         }
 
         if (gamepad2Ex.wasJustPressed(GamepadKeys.Button.DPAD_UP)) {
-            linearActuatorPosition += 25
-        }
-        if (gamepad2Ex.wasJustPressed(GamepadKeys.Button.DPAD_DOWN)) {
             linearActuatorPosition -= 25
         }
-        if (gamepad2Ex.wasJustPressed(GamepadKeys.Button.DPAD_LEFT)) {
-            linearActuatorPosition -= 5
+        if (gamepad2Ex.wasJustPressed(GamepadKeys.Button.DPAD_DOWN)) {
+            linearActuatorPosition += 25
         }
-        if (gamepad2Ex.wasJustPressed(GamepadKeys.Button.DPAD_RIGHT)) {
+        if (gamepad2Ex.wasJustPressed(GamepadKeys.Button.DPAD_LEFT)) {
             linearActuatorPosition += 5
         }
+        if (gamepad2Ex.wasJustPressed(GamepadKeys.Button.DPAD_RIGHT)) {
+            linearActuatorPosition -= 5
+        }
 
-        robot.clawServo.position = 0.5
 
         telemetry.addData("Left Stick Y", gamepad2.left_stick_y)
         telemetry.addData("Right Stick Y", gamepad2.right_stick_y)
         telemetry.addLine()
         telemetry.addData("Linear Actuator Power", robot.linearActuatorMotor.power)
-        telemetry.addData("Lift Power", robot.liftMotor.power)
         telemetry.addLine()
         telemetry.addData("Linear Actuator Position", robot.linearActuatorMotor.currentPosition)
         telemetry.addData("Linear Actuator Target Position", linearActuatorPosition)
         telemetry.addLine()
-        telemetry.addData("Lift Position", robot.liftMotor.currentPosition)
         telemetry.addData("Lift Target Position", liftPosition)
 
     }

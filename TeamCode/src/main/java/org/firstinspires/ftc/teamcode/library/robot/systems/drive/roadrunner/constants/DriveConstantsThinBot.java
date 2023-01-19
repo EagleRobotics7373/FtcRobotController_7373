@@ -34,13 +34,13 @@ public class DriveConstantsThinBot {
             );
 
     public static PIDCoefficients TRANSLATIONAL_X_PID =
-            new PIDCoefficients(4.2, 0.0, 0.4);
+            new PIDCoefficients(1.75, 0.0, 0.4);
 
     public static PIDCoefficients TRANSLATIONAL_Y_PID =
-            new PIDCoefficients(3.5, 0.0, 0.1);
+            new PIDCoefficients(2.0, 0.0, 0.0);
 
     public static PIDCoefficients HEADING_PID =
-            new PIDCoefficients(4.5, 0.1, 0.25);
+            new PIDCoefficients(5.0, 0.5, 0.75);
 
     public static double rpmToVelocity(double rpm) {
         return rpm * GEAR_RATIO * 2 * Math.PI * WHEEL_RADIUS / 60.0;

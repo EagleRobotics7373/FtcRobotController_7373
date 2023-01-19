@@ -33,8 +33,8 @@ public class SignalVisionConstants {
     public static double RATIO_LOWER_BOUND = 0.5;
     public static double RATIO_UPPER_BOUND = 1.0;
 
-    public static double CUTOFF_TOP = 0.00;
+    public static double CUTOFF_TOP = 0.10;
     public static double CUTOFF_BOTTOM = 0.60;
-    public static double CUTOFF_LEFT = 0.20;
+    public static double CUTOFF_LEFT = 0.40;
     public static double CUTOFF_RIGHT = 0.80;
 }

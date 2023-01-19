@@ -11,9 +11,6 @@ class DualServoClawLift(
 ) {
     var liftPosition: LiftPosition = LiftPosition.FLOOR
 
-    private var openPosition: Array<Double> = arrayOf(0.93, 0.07)
-    private var closedPosition: Array<Double> = arrayOf(0.45, 0.55)
-
     fun liftManual(motorPower: Double) {
         linearActuatorMotor.mode = DcMotor.RunMode.RUN_WITHOUT_ENCODER
         linearActuatorMotor.power = motorPower
@@ -26,7 +23,9 @@ class DualServoClawLift(
     }
 
     fun liftAuto(newLiftPosition: LiftPosition, power: Double) {
-        liftAuto(liftPosition.ticks, power)
+        linearActuatorMotor.targetPosition = newLiftPosition.ticks
+        linearActuatorMotor.mode = DcMotor.RunMode.RUN_TO_POSITION
+        linearActuatorMotor.power = power
         liftPosition = newLiftPosition
     }
 
@@ -51,20 +50,20 @@ class DualServoClawLift(
     }
 
     fun clawOpen() {
-        leftClawServo.position = openPosition[0]
-        rightClawServo.position = openPosition[1]
+        leftClawServo.position = 0.8
+        rightClawServo.position = 0.8
     }
 
     fun clawClose() {
-        leftClawServo.position = closedPosition[0]
-        rightClawServo.position = closedPosition[1]
+        leftClawServo.position = 0.14
+        rightClawServo.position = 0.1
     }
 
     enum class LiftPosition(val ticks: Int) {
         FLOOR(0),
-        GROUND(-100),
-        LOW(-690),
-        MIDDLE(-1000),
-        HIGH(-1000);
+        GROUND(-200),
+        LOW(-1776),
+        MIDDLE(-2925),
+        HIGH(-4050);
     }
 }

@@ -83,7 +83,7 @@ class TeleOpCore: OpMode() {
         }
 
         val vertical = -gamepad1.left_stick_y.toDouble().pow(if (cubicEnable) 3 else 1) * (speed/speedMax) * (if (reverse) 1 else -1)
-        val horizontal = gamepad1.left_stick_x.toDouble().pow(if (cubicEnable) 3 else 1) * (speed/speedMax) * (if (reverse) 1 else -1)
+        val horizontal = -gamepad1.left_stick_x.toDouble().pow(if (cubicEnable) 3 else 1) * (speed/speedMax) * (if (reverse) 1 else -1)
         val pivot = gamepad1.right_stick_x.toDouble().pow(if (cubicEnable) 3 else 1) * (speed/speedMax)
 
         robot.holonomic.runWithoutEncoderVectored(horizontal, vertical, pivot,
@@ -93,15 +93,12 @@ class TeleOpCore: OpMode() {
         // Cycle lift positions
         when {
             gamepad2Ex.wasJustPressed(RIGHT_BUMPER) -> robot.dualServoClawLift.liftCycleUp(liftPowerAuto)
-            gamepad2Ex.wasJustPressed(LEFT_BUMPER) -> robot.dualServoClawLift.liftCycleDown(-liftPowerAuto/8)
+            gamepad2Ex.wasJustPressed(LEFT_BUMPER) -> robot.dualServoClawLift.liftCycleDown(liftPowerAuto*4/5)
             gamepad2Ex.wasJustPressed(X) -> robot.dualServoClawLift.liftAuto(DualServoClawLift.LiftPosition.FLOOR, liftPowerAuto)
         }
 
         // Manual lift control
-        var linearActuatorPower = if (!gamepad2CanControlExtras) gamepad2.left_stick_y.toDouble()*0.5 else 0.0
-        if (linearActuatorPower in -0.2..0.0 && robot.linearActuatorMotor.currentPosition < -100) linearActuatorPower = -0.2
-        else if (linearActuatorPower in 0.01..1.0) linearActuatorPower = 0.0
-        val liftPower = if (!gamepad2CanControlExtras) -gamepad2.right_stick_y.toDouble() else 0.0
+        val linearActuatorPower = if (!gamepad2CanControlExtras) gamepad2.left_stick_y.toDouble()*0.85 else 0.0
         if (robot.linearActuatorMotor.mode == DcMotor.RunMode.RUN_TO_POSITION) {
             if (gamepad2.left_stick_y.absoluteValue > 0 ) robot.dualServoClawLift.liftManual(0.0)
         } else if (gamepad2.y && gamepad2CanControlExtras) {
@@ -130,8 +127,9 @@ class TeleOpCore: OpMode() {
         telemetry.addData("Cubic enable", cubicEnable)
         telemetry.addLine()
         telemetry.addData("Linear actuator power", linearActuatorPower)
-        telemetry.addData("Lift power", liftPower)
         telemetry.addData("Linear actuator motor position", robot.linearActuatorMotor.currentPosition)
+        telemetry.addData("Linear actuator target position", robot.linearActuatorMotor.targetPosition)
+        telemetry.addData("Lift position", robot.dualServoClawLift.liftPosition.name)
         telemetry.addLine()
         telemetry.addData("Vertical", vertical)
         telemetry.addData("Horizontal", horizontal)

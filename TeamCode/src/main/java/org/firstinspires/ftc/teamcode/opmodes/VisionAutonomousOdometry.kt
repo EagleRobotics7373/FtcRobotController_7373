@@ -12,18 +12,19 @@ import org.firstinspires.ftc.teamcode.library.functions.StartingPosition
 import org.firstinspires.ftc.teamcode.library.functions.StartingPosition.LEFT
 import org.firstinspires.ftc.teamcode.library.functions.StartingPosition.RIGHT
 import org.firstinspires.ftc.teamcode.library.robot.robotcore.ExtThinBot
+import org.firstinspires.ftc.teamcode.library.robot.systems.lt.DualServoClawLift
 import org.firstinspires.ftc.teamcode.library.vision.base.VisionFactory
 import org.firstinspires.ftc.teamcode.library.vision.powerplay.SignalVisionPipeline
 
 @com.qualcomm.robotcore.eventloop.opmode.Autonomous(name = "Vision Autonomous (Odometry)", group = "Main")
 class VisionAutonomousOdometry : BaseAutonomous<ExtThinBot>() {
 
-    private var allianceColor: AllianceColor by config.custom("Alliance Color", RED, BLUE)
     private var startingPosition: StartingPosition by config.custom("Starting Position", LEFT, RIGHT)
+    private var coneStack: Int by config.int("Cone Stack", 1, 1..4 step 1)
     private var signalState: SignalState by config.custom("Default Parking Position", SignalState.CENTER, SignalState.LEFT, SignalState.RIGHT)
     private var extraDelayBeforeStart: Int by config.int("Delay Before First Action", 0, 0..20000 step 1000)
     private var webcamScanningDuration: Int by config.int("Webcam Scanning Duration", 2000, 0..5000 step 500)
-    private var safeModeActive: Boolean by config.boolean("Safe Mode", true)
+    private var safeModeActive: Boolean by config.boolean("Safe Mode", false)
     private var safeModeErrorThreshold: Int by config.int("Safe Mode Error Threshold", 10, 0..30 step 2)
 
     override fun runOpMode() {
@@ -46,15 +47,15 @@ class VisionAutonomousOdometry : BaseAutonomous<ExtThinBot>() {
             cvContainer.pipeline.shouldKeepTracking = true
 
             robot.holonomicRR.poseEstimate = Pose2d(
-                    -36.0 reverseIf RIGHT reverseIf BLUE,
-                    -63.0 reverseIf BLUE,
-                    -Math.PI / 2 reverseIf BLUE
+                    36.0 reverseIf LEFT,
+                    63.0,
+                    Math.PI / 2
             )
 
             sleep(webcamScanningDuration.toLong())
 
+            // Detect Signal
             val contourResults = cvContainer.pipeline.contourResults
-
             if (contourResults[1]?.valid == true) {
                 signalState = SignalState.CENTER
                 println("Succeeded to Detect Signal")
@@ -72,73 +73,51 @@ class VisionAutonomousOdometry : BaseAutonomous<ExtThinBot>() {
                 println("Failed to Detect Signal, Using Default Value")
             }
 
-            telem.addData("Parking Position for $allianceColor Alliance", signalState)
+            telem.addData("Parking Position", signalState)
             telem.update()
 
             sleep(extraDelayBeforeStart.toLong())
 
-            //Drive to Cone
-            builder().strafeTo(
-                    Vector2d(
-                            -36.0 reverseIf RIGHT
-                                    reverseIf BLUE, -10.5 reverseIf BLUE
-                    )
-            ).buildAndRun(safeModeActive)
-            safeModeCheck(safeModeActive)
-
-            robot.dualServoClawLift.liftAuto(-290, -0.8)
-            robot.dualServoClawLift.clawOpen()
-
-            builder().lineToSplineHeading(
-                    Pose2d(
-                            -50.6 reverseIf RIGHT
-                                    reverseIf BLUE, -12.5 reverseIf BLUE,
-                            (Math.PI / 2 reverseIf BLUE) + (Math.PI / 2 reverseIf RIGHT)
-                    )
-            ).buildAndRun()
-
-            //Pick Up Cone
+            //Pick up Cone
             robot.dualServoClawLift.clawClose()
             sleep(1000)
-            robot.dualServoClawLift.liftAuto(-1000, 0.3)
+            robot.dualServoClawLift.liftAuto(DualServoClawLift.LiftPosition.MIDDLE, -0.85)
 
-            builder().lineToSplineHeading(
-                    Pose2d(
-                            -22.0 reverseIf RIGHT
-                                    reverseIf BLUE, -17.0 reverseIf BLUE,
-                            -Math.PI / 2 reverseIf BLUE
-                    ),
-                    DriveConstraints(
-                            10.0, 25.0, 40.0,
-                            Math.PI, Math.PI, 0.0
-                    )
-            ).buildAndRun()
+            //Drive to Goal
+            builder().back(35.0).buildAndRun(safeModeActive)
+            safeModeCheck(safeModeActive)
+            sleep(500)
+            builder().strafeLeft(12.0 reverseIf LEFT).buildAndRun(safeModeActive)
+            safeModeCheck(safeModeActive)
+            sleep(250)
 
-            //Drop Off Cone
-            sleep(100)
+            //Drop Cone
+            robot.dualServoClawLift.liftAuto(DualServoClawLift.LiftPosition.LOW, -0.85)
             robot.dualServoClawLift.clawOpen()
+            sleep(250)
 
-            // Park
-            builder().strafeTo(
-                    Vector2d(
-                            ((-36.0 reverseIf RIGHT) + signalState.shift) reverseIf BLUE,
-                            -12.5 reverseIf BLUE
-                    )
-            ).buildAndRun()
-            builder().strafeTo(
-                    Vector2d(
-                            ((-36.0 reverseIf RIGHT) + signalState.shift) reverseIf BLUE,
-                            -36.0 reverseIf BLUE
-                    )
-            ).buildAndRun()
+            //Back up
+            builder().forward(4.0).buildAndRun(safeModeActive)
 
-            robot.dualServoClawLift.liftAuto(0, 0.01)
-            sleep(1000)
+            //Drive to Parking
+            if (startingPosition == RIGHT) {
+                when (signalState) {
+                    SignalState.LEFT -> builder().strafeLeft(12.0).buildAndRun(safeModeActive)
+                    SignalState.CENTER -> builder().strafeLeft(-12.0).buildAndRun(safeModeActive)
+                    SignalState.RIGHT -> builder().strafeLeft(-26.0).buildAndRun(safeModeActive)
+                }
+            } else {
+                when (signalState) {
+                    SignalState.RIGHT -> builder().strafeLeft(-12.0).buildAndRun(safeModeActive)
+                    SignalState.CENTER -> builder().strafeLeft(12.0).buildAndRun(safeModeActive)
+                    SignalState.LEFT -> builder().strafeLeft(28.0).buildAndRun(safeModeActive)
+                }
+            }
+
         }
 
     }
 
-    private infix fun Double.reverseIf(testColor: AllianceColor) : Double = if (allianceColor == testColor) -this else this
     private infix fun Double.reverseIf(testPosition: StartingPosition) : Double = if (startingPosition == testPosition) -this else this
 
 }
