@@ -103,6 +103,8 @@ class TeleOpCore: OpMode() {
             if (gamepad2.left_stick_y.absoluteValue > 0 ) robot.dualServoClawLift.liftManual(0.0)
         } else if (gamepad2.y && gamepad2CanControlExtras) {
             robot.dualServoClawLift.liftManual(-0.10)
+        } else if (gamepad2.left_stick_y == 0.0f) {
+            robot.dualServoClawLift.liftAuto(robot.linearActuatorMotor.currentPosition, liftPowerAuto)
         } else {
             robot.dualServoClawLift.liftManual(linearActuatorPower)
         }
