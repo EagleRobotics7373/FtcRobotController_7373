@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.opmodes
 
 import com.arcrobotics.ftclib.gamepad.GamepadEx
+import com.arcrobotics.ftclib.gamepad.GamepadKeys
 import com.arcrobotics.ftclib.gamepad.GamepadKeys.Button.*
 import com.qualcomm.robotcore.eventloop.opmode.OpMode
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
@@ -9,14 +10,13 @@ import com.qualcomm.robotcore.util.ElapsedTime
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference
-import org.firstinspires.ftc.teamcode.library.functions.AllianceColor
-import org.firstinspires.ftc.teamcode.library.functions.AllianceColor.Companion.persistingAllianceColor
 import org.firstinspires.ftc.teamcode.library.functions.ToggleButtonWatcher
 import org.firstinspires.ftc.teamcode.library.robot.robotcore.ExtThinBot
+import org.firstinspires.ftc.teamcode.library.robot.systems.lt.DualServoClawLift
 import kotlin.math.absoluteValue
 import kotlin.math.pow
 
-@TeleOp(name="TeleOpCore (Kotlin)")
+@TeleOp(name="TeleOpCore (Kotlin)", group ="A")
 class TeleOpCore: OpMode() {
 
     lateinit var robot: ExtThinBot
@@ -24,7 +24,7 @@ class TeleOpCore: OpMode() {
     lateinit var gamepad2Ex: GamepadEx
 
     private var reverse = false/* by DashboardVar(false, "reverse", this::class)*/
-    private var speed = 3/*by DashboardVar(1, "speed", this::class) {it in 1..3}*/
+    private var speed = 4/*by DashboardVar(1, "speed", this::class) {it in 1..3}*/
     private var speedMax: Double = 5.0
     private var maxRpm = 435
     private var cubicEnable = false
@@ -32,17 +32,17 @@ class TeleOpCore: OpMode() {
     private var zeroAngle = 0.0
     private var lastTimeRead = 0.0
 
-    private var defaultWebcamPosition = 0.1/*by DashboardVar(1.0, "defaultWebcamPosition", this::class) { it in 0.0..1.0 }*/
+    private var liftPowerAuto = -0.8
 
     private lateinit var elapsedTime: ElapsedTime
 
     private val orientation get() = robot.imuControllerC.imuA.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.RADIANS)
 
     private val gamepad1CanControlAccessories: Boolean
-        get() = gamepad1.left_bumper && gamepad1.right_bumper
+        get() = false //gamepad1.left_bumper && gamepad1.right_bumper
 
     private val gamepad2CanControlExtras: Boolean
-        get() = gamepad2.right_bumper
+        get() = false //gamepad2.right_bumper
 
     private lateinit var toggleGamepad1TouchpadPress: ToggleButtonWatcher
     private lateinit var toggleGamepad2TouchpadPress: ToggleButtonWatcher
@@ -50,6 +50,7 @@ class TeleOpCore: OpMode() {
     override fun init() {
         robot = ExtThinBot(hardwareMap)
         robot.holonomic.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE)
+        robot.linearActuatorMotor.mode = DcMotor.RunMode.STOP_AND_RESET_ENCODER
 
         gamepad1Ex = GamepadEx(gamepad1)
         gamepad2Ex = GamepadEx(gamepad2)
@@ -66,41 +67,60 @@ class TeleOpCore: OpMode() {
         toggleGamepad1TouchpadPress()
         toggleGamepad2TouchpadPress()
 
-        // Control webcam servo
-        robot.webcamServo.position = defaultWebcamPosition
-
         if (!gamepad1CanControlAccessories) {
-            // Adjust drivetrain speed
+            // Adjust drivetrain speed and cubic enable
             when {
                 gamepad1Ex.wasJustPressed(DPAD_UP) -> if (speed < speedMax) speed++
                 gamepad1Ex.wasJustPressed(DPAD_DOWN) -> if (speed > 1) speed--
                 gamepad1Ex.wasJustPressed(DPAD_LEFT) -> cubicEnable = !cubicEnable
-                toggleGamepad1TouchpadPress.lastState -> {
-                    speed = when {
-                        gamepad1.touchpad_finger_1_x < -0.5 -> 2
-                        gamepad1.touchpad_finger_1_x < 0.0 -> 3
-                        gamepad1.touchpad_finger_1_x < 0.5 -> 4
-                        else -> 5
-                    }
-                }
             }
 
-            // Reverse drivetrain, and cubic enable
+            // Reverse drivetrain and fod enable
             when {
-                gamepad1.a -> { reverse = true; fod = false }
-                gamepad1.b -> { reverse = false; fod = false }
                 gamepad1Ex.wasJustPressed(Y) -> { reverse = !reverse; fod = false }
                 gamepad1Ex.wasJustPressed(X) -> fod = true
                 gamepad1.x && gamepad1.start -> zeroAngle = robot.imuControllerC.getHeading()
             }
         }
 
-        val vertical = -gamepad1.left_stick_y.toDouble().pow(if (cubicEnable) 3 else 1) * (speed/speedMax) * (if (reverse) 1 else -1)
-        val horizontal = gamepad1.left_stick_x.toDouble().pow(if (cubicEnable) 3 else 1) * (speed/speedMax) * (if (reverse) 1 else -1)
-        val pivot = gamepad1.right_stick_x.toDouble().pow(if (cubicEnable) 3 else 1) * (speed/speedMax)
+        val speedProportion = if (gamepad1Ex.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > 0.5) 0.6 else speed/speedMax
+
+        val vertical = -gamepad1.left_stick_y.toDouble().pow(if (cubicEnable) 3 else 1) * (speedProportion) * (if (reverse) 1 else -1)
+        val horizontal = -gamepad1.left_stick_x.toDouble().pow(if (cubicEnable) 3 else 1) * (speedProportion) * (if (reverse) 1 else -1)
+        val pivot = gamepad1.right_stick_x.toDouble().pow(if (cubicEnable) 3 else 1) * (speedProportion)
 
         robot.holonomic.runWithoutEncoderVectored(horizontal, vertical, pivot,
                 if (fod) zeroAngle - robot.imuControllerC.getHeading() else 0.0)
+
+
+        // Cycle lift positions
+        when {
+            gamepad2Ex.wasJustPressed(RIGHT_BUMPER) -> robot.dualServoClawLift.liftCycleUp(liftPowerAuto)
+            gamepad2Ex.wasJustPressed(LEFT_BUMPER) -> robot.dualServoClawLift.liftCycleDown(liftPowerAuto*4/5)
+            gamepad2Ex.wasJustPressed(X) -> robot.dualServoClawLift.liftAuto(DualServoClawLift.LiftPosition.FLOOR, liftPowerAuto)
+        }
+
+        // Manual lift control
+        val linearActuatorPower = if (!gamepad2CanControlExtras) gamepad2.left_stick_y.toDouble()*0.85 else 0.0
+        if (robot.linearActuatorMotor.mode == DcMotor.RunMode.RUN_TO_POSITION) {
+            if (gamepad2.left_stick_y.absoluteValue > 0 ) robot.dualServoClawLift.liftManual(0.0)
+        } else if (gamepad2.y && gamepad2CanControlExtras) {
+            robot.dualServoClawLift.liftManual(-0.10)
+        } else if (gamepad2.left_stick_y == 0.0f) {
+            robot.dualServoClawLift.liftAuto(robot.linearActuatorMotor.currentPosition, liftPowerAuto)
+        } else {
+            robot.dualServoClawLift.liftManual(linearActuatorPower)
+        }
+
+        when {
+            gamepad2.a -> robot.dualServoClawLift.clawOpen()
+            gamepad2.b -> robot.dualServoClawLift.clawClose()
+        }
+
+        // Recalibrate Lift Bottom Position
+        if (gamepad2Ex.wasJustPressed(Y)) {
+            robot.linearActuatorMotor.mode = DcMotor.RunMode.STOP_AND_RESET_ENCODER
+        }
 
         val currentTime = elapsedTime.milliseconds()
         telemetry.addData("Time Δ (ms)", currentTime - lastTimeRead)
@@ -111,6 +131,10 @@ class TeleOpCore: OpMode() {
         telemetry.addData("Drivetrain max rpm", maxRpm * (speed/speedMax))
         telemetry.addData("Cubic enable", cubicEnable)
         telemetry.addLine()
+        telemetry.addData("Linear actuator power", linearActuatorPower)
+        telemetry.addData("Linear actuator motor position", robot.linearActuatorMotor.currentPosition)
+        telemetry.addData("Linear actuator target position", robot.linearActuatorMotor.targetPosition)
+        telemetry.addData("Lift position", robot.dualServoClawLift.liftPosition.name)
         telemetry.addLine()
         telemetry.addData("Vertical", vertical)
         telemetry.addData("Horizontal", horizontal)
@@ -129,20 +153,5 @@ class TeleOpCore: OpMode() {
         telemetry.addData("Z Orientation", orientation.firstAngle)
         telemetry.addData("Y Orientation", orientation.secondAngle)
         telemetry.addData("X Orientation", orientation.thirdAngle)
-        telemetry.addLine()
-        telemetry.addData("Gamepad1 Touchpad Press", gamepad1.touchpad)
-        telemetry.addData("Gamepad1 Finger1 X", gamepad1.touchpad_finger_1_x)
-        telemetry.addData("Gamepad1 Finger1 Y", gamepad1.touchpad_finger_1_y)
-        telemetry.addData("Gamepad1 Finger 1 Press", gamepad1.touchpad_finger_1)
-        telemetry.addData("Gamepad1 Finger2 X", gamepad1.touchpad_finger_2_x)
-        telemetry.addData("Gamepad1 Finger2 Y", gamepad1.touchpad_finger_2_y)
-        telemetry.addData("Gamepad1 Finger 2 Press", gamepad1.touchpad_finger_2)
-        telemetry.addData("Gamepad2 Touchpad Press", gamepad2.touchpad)
-        telemetry.addData("Gamepad2 Finger1 X", gamepad2.touchpad_finger_1_x)
-        telemetry.addData("Gamepad2 Finger1 Y", gamepad2.touchpad_finger_1_y)
-        telemetry.addData("Gamepad1 Finger 1 Press", gamepad2.touchpad_finger_1)
-        telemetry.addData("Gamepad2 Finger2 X", gamepad2.touchpad_finger_2_x)
-        telemetry.addData("Gamepad2 Finger2 Y", gamepad2.touchpad_finger_2_y)
-        telemetry.addData("Gamepad1 Finger 2 Press", gamepad2.touchpad_finger_2)
     }
 }

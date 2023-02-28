@@ -5,9 +5,9 @@
         <LynxModule name="Control Hub" port="173">
             <Matrix12vMotor name="backLeftMotor" port="0" />
             <Matrix12vMotor name="frontLeftMotor" port="1" />
-            <Matrix12vMotor name="liftMotor" port="2" />
+            <Matrix12vMotor name="odometryRight" port="2" />
 
-            <Matrix12vMotor name="odometryCenter" port="3" />
+            <Matrix12vMotor name="linearActuatorMotor" port="3" />
 
             <LynxEmbeddedIMU name="imuC" port="0" bus="0"/>
         </LynxModule>
@@ -15,11 +15,10 @@
             <Matrix12vMotor name="backRightMotor" port="0" />
             <Matrix12vMotor name="frontRightMotor" port="1" />
 
-            <Matrix12vMotor name="linearActuatorMotor" port="2" />
+            <Matrix12vMotor name="odometryCenter" port="3" />
 
-            <Matrix12vMotor name="odometryRight" port="3" />
-
-            <Servo name="clawServo" port="0"/>
+            <Servo name="leftClawServo" port="0"/>
+            <Servo name="rightClawServo" port="2"/>
 
             <LynxEmbeddedIMU name="imuE" port="0" bus="0"/>
         </LynxModule>
