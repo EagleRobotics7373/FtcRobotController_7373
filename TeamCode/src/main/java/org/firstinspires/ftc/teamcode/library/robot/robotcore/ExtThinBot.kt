@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.library.robot.robotcore
 
+import com.qualcomm.hardware.lynx.LynxModule
 import com.qualcomm.robotcore.hardware.DcMotorEx
 import com.qualcomm.robotcore.hardware.DistanceSensor
 import com.qualcomm.robotcore.hardware.HardwareMap
@@ -21,6 +22,8 @@ class ExtThinBot(_hardwareMap: HardwareMap): BaseRobot(_hardwareMap) {
     @JvmField val dualServoClawLift = DualServoClawLift(linearActuatorMotor, leftClawServo, rightClawServo)
     @JvmField val distanceSystem = DistanceSystem(hwInit("leftDistanceSensor"),
             hwInit("rightDistanceSensor"), hwInit("frontDistanceSensor"))
+
+    @JvmField val controlHub : LynxModule = hwInit("Control Hub")
 
     @JvmField val imuControllerC = IMUController(hardwareMap, id = 'C')
     override val holonomicRR: HolonomicRR = HolonomicRR(imuControllerC, frontLeftMotor, backLeftMotor, backRightMotor, frontRightMotor,

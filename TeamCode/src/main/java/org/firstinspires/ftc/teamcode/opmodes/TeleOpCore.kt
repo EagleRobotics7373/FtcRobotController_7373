@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.opmodes
 
 import com.arcrobotics.ftclib.gamepad.GamepadEx
+import com.arcrobotics.ftclib.gamepad.GamepadKeys
 import com.arcrobotics.ftclib.gamepad.GamepadKeys.Button.*
 import com.qualcomm.robotcore.eventloop.opmode.OpMode
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
@@ -23,7 +24,7 @@ class TeleOpCore: OpMode() {
     lateinit var gamepad2Ex: GamepadEx
 
     private var reverse = false/* by DashboardVar(false, "reverse", this::class)*/
-    private var speed = 3/*by DashboardVar(1, "speed", this::class) {it in 1..3}*/
+    private var speed = 4/*by DashboardVar(1, "speed", this::class) {it in 1..3}*/
     private var speedMax: Double = 5.0
     private var maxRpm = 435
     private var cubicEnable = false
@@ -82,9 +83,11 @@ class TeleOpCore: OpMode() {
             }
         }
 
-        val vertical = -gamepad1.left_stick_y.toDouble().pow(if (cubicEnable) 3 else 1) * (speed/speedMax) * (if (reverse) 1 else -1)
-        val horizontal = -gamepad1.left_stick_x.toDouble().pow(if (cubicEnable) 3 else 1) * (speed/speedMax) * (if (reverse) 1 else -1)
-        val pivot = gamepad1.right_stick_x.toDouble().pow(if (cubicEnable) 3 else 1) * (speed/speedMax)
+        val speedProportion = if (gamepad1Ex.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > 0.5) 0.6 else speed/speedMax
+
+        val vertical = -gamepad1.left_stick_y.toDouble().pow(if (cubicEnable) 3 else 1) * (speedProportion) * (if (reverse) 1 else -1)
+        val horizontal = -gamepad1.left_stick_x.toDouble().pow(if (cubicEnable) 3 else 1) * (speedProportion) * (if (reverse) 1 else -1)
+        val pivot = gamepad1.right_stick_x.toDouble().pow(if (cubicEnable) 3 else 1) * (speedProportion)
 
         robot.holonomic.runWithoutEncoderVectored(horizontal, vertical, pivot,
                 if (fod) zeroAngle - robot.imuControllerC.getHeading() else 0.0)

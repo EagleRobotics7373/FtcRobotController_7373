@@ -1,36 +1,80 @@
 package org.firstinspires.ftc.teamcode.opmodes
 
-import com.qualcomm.robotcore.hardware.DcMotor
+import org.firstinspires.ftc.teamcode.library.functions.AllianceColor
+import org.firstinspires.ftc.teamcode.library.functions.AllianceColor.*
+import org.firstinspires.ftc.teamcode.library.functions.SignalState
+import org.firstinspires.ftc.teamcode.library.functions.StartingPosition
+import org.firstinspires.ftc.teamcode.library.functions.StartingPosition.*
 import org.firstinspires.ftc.teamcode.library.robot.robotcore.ExtThinBot
+import org.firstinspires.ftc.teamcode.library.vision.base.VisionFactory
+import org.firstinspires.ftc.teamcode.library.vision.powerplay.SignalVisionPipeline
 
 @com.qualcomm.robotcore.eventloop.opmode.Autonomous(name = "Parking Autonomous", group = "Main")
 class ParkingAutonomous : BaseAutonomous<ExtThinBot>() {
 
-    private var powerX: Int by config.int("Drivetrain Power (x)", 0, -100..100 step 5)
-    private var powerY: Int by config.int("Drivetrain Power (y)", 75, -100..100 step 5)
-    private var drivingTime: Int by config.int("Time (ms)", 300, 0..5000 step 100)
+    private var allianceColor: AllianceColor by config.custom("Alliance Color", RED, BLUE)
+    private var startingPosition: StartingPosition by config.custom("Starting Position", LEFT, RIGHT)
+    private var signalState: SignalState by config.custom("Default Parking Position", SignalState.CENTER, SignalState.LEFT, SignalState.RIGHT)
+    private var extraDelayBeforeStart: Int by config.int("Delay Before First Action", 0, 0..20000 step 1000)
+    private var webcamScanningDuration: Int by config.int("Webcam Scanning Duration", 3000, 0..5000 step 500)
 
     override fun runOpMode() {
         robot = ExtThinBot(hardwareMap)
+        super.autonomousConfig()
+
+        val cvContainer = VisionFactory.createOpenCv(
+                hardwareMap,
+                "Webcam 1",
+                SignalVisionPipeline())
+        cvContainer.start()
+
         super.operateMenu(null)
 
-        //Mecanum Drive
+        if (opModeIsActive()) {
+            cvContainer.pipeline.tracking = true
+            cvContainer.pipeline.shouldKeepTracking = true
 
-        //Mecanum Drive
-        val vertical = powerY * 0.01
-        val horizontal = powerX * 0.01
-        val pivot = 0.0
+            sleep(webcamScanningDuration.toLong())
 
+            val contourResults = cvContainer.pipeline.contourResults
 
-//        robot.holonomic.runWithoutEncoderVectored(horizontal, vertical, pivot, 0);
-        robot.frontRightMotor.power = pivot - vertical + horizontal
-        robot.backRightMotor.power = pivot - vertical - horizontal
-        robot.frontLeftMotor.power = pivot + vertical + horizontal
-        robot.backLeftMotor.power = pivot + vertical - horizontal
+            if (contourResults[1]?.valid == true) {
+                signalState = SignalState.CENTER
+                println("Succeeded to Detect Signal")
+            }
+            else if (contourResults[0]?.valid == true) {
+                signalState = SignalState.LEFT
+                println("Succeeded to Detect Signal")
+            }
+            else if (contourResults[2]?.valid == true) {
+                signalState = SignalState.RIGHT
+                println("Succeeded to Detect Signal")
+            }
+            else {
+                telem.addLine("Failed to Detect Signal, Using Default Value")
+                println("Failed to Detect Signal, Using Default Value")
+            }
+            telem.addData("Parking Position", signalState)
+            telem.update()
 
-        sleep(drivingTime.toLong())
+            sleep(extraDelayBeforeStart.toLong())
 
-        robot.holonomic.stop()
+            robot.holonomic.runWithoutEncoderVectored(
+                    when (signalState) {
+                        SignalState.LEFT -> 0.635
+                        SignalState.RIGHT -> -0.635
+                        else -> 0.0 },
+                    0.0, 0.0, 0.0
+            )
+            sleep(1000L)
+            robot.holonomic.stop()
+
+            robot.holonomic.runWithoutEncoderVectored(0.0, -0.75, 0.0, 0.0)
+            sleep(700L)
+            robot.holonomic.stop()
+        }
 
     }
+
+
 }

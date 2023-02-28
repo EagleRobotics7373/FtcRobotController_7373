@@ -24,7 +24,7 @@ public class DriveConstantsThinBot {
     public static Pose2d globalPoseEstimate = null;
 
     public static boolean RUN_USING_ENCODER = true;
-    public static PIDCoefficients MOTOR_VELO_PID = new PIDCoefficients(20, 0, 0);
+    public static PIDCoefficients MOTOR_VELO_PID = new PIDCoefficients(4.35, 0, 0);
 
     public static DriveConstraints BASE_CONSTRAINTS =
             new DriveConstraints(
@@ -34,10 +34,10 @@ public class DriveConstantsThinBot {
             );
 
     public static PIDCoefficients TRANSLATIONAL_X_PID =
-            new PIDCoefficients(2.3, 0.0, 0.4);
+            new PIDCoefficients(1.32, 0.0, 0.4);
 
     public static PIDCoefficients TRANSLATIONAL_Y_PID =
-            new PIDCoefficients(1.22, 0.0, 0.0);
+            new PIDCoefficients(1.75, 0.0, 0.0);
 
     public static PIDCoefficients HEADING_PID =
             new PIDCoefficients(10.0, 0.5, 0.75);

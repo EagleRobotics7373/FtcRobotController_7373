@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode.library.robot.systems.lt
 
 import com.qualcomm.robotcore.hardware.DcMotor
 import com.qualcomm.robotcore.hardware.Servo
-import org.firstinspires.ftc.teamcode.library.robot.systems.meet1.LiftClawSystem
 
 class DualServoClawLift(
         private val linearActuatorMotor: DcMotor,
@@ -16,17 +15,35 @@ class DualServoClawLift(
         linearActuatorMotor.power = motorPower
     }
 
-    fun liftAuto(ticks: Int, power: Double) {
+    fun liftAuto(ticks: Int, power: Double, pauseWhileActive: Boolean = false) {
         linearActuatorMotor.targetPosition = ticks
         linearActuatorMotor.mode = DcMotor.RunMode.RUN_TO_POSITION
         linearActuatorMotor.power = power
+        if (pauseWhileActive) {
+            while (linearActuatorMotor.isBusy) {
+                try {
+                    Thread.sleep(10)
+                } catch (e: InterruptedException) {
+                    Thread.currentThread().interrupt()
+                }
+            }
+        }
     }
 
-    fun liftAuto(newLiftPosition: LiftPosition, power: Double) {
+    fun liftAuto(newLiftPosition: LiftPosition, power: Double, pauseWhileActive: Boolean = false) {
         linearActuatorMotor.targetPosition = newLiftPosition.ticks
         linearActuatorMotor.mode = DcMotor.RunMode.RUN_TO_POSITION
         linearActuatorMotor.power = power
         liftPosition = newLiftPosition
+        if (pauseWhileActive) {
+            while (linearActuatorMotor.isBusy) {
+                try {
+                    Thread.sleep(10)
+                } catch (e: InterruptedException) {
+                    Thread.currentThread().interrupt()
+                }
+            }
+        }
     }
 
     fun liftCycleUp(power: Double) {
@@ -55,8 +72,8 @@ class DualServoClawLift(
     }
 
     fun clawClose() {
-        leftClawServo.position = 0.14
-        rightClawServo.position = 0.1
+        leftClawServo.position = 0.25
+        rightClawServo.position = 0.25
     }
 
     enum class LiftPosition(val ticks: Int) {
